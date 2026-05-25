@@ -1,9 +1,11 @@
-# KeepKind: Photo Declutter
+# Bide: Camera Roll Review
 
-> **Keep the memories. Clear the clutter.**
+> **Bide your time. Keep what matters.**
 > A private, on-device photo review app for iPhone.
 
-KeepKind helps you review the photos and videos cluttering your iPhone — large videos, old screenshots, similar shots, blurry ones — and safely move what you don't want to Recently Deleted, where it can be recovered for 30 days.
+Bide helps you review the photos and videos cluttering your iPhone — large videos, old screenshots, similar shots, blurry ones — at your own pace, and safely move what you don't want to Recently Deleted, where it can be recovered for 30 days.
+
+The name *bide* — "to dwell, to wait patiently" — is the whole product philosophy: take your time. Look twice. Nothing leaves your phone.
 
 **No ads. No account. No subscription. No tracking. No cloud upload by us.**
 
@@ -15,7 +17,7 @@ The iPhone photo cleanup category on the App Store is large, ugly, and mostly pr
 
 People deserve better.
 
-KeepKind takes the opposite stance: **conservative recommendations, explanations for every suggestion, nothing deleted without a Review Basket confirmation, and zero data leaves your phone.** It's the photo cleaner for people who don't trust photo cleaners.
+Bide takes the opposite stance: **conservative recommendations, explanations for every suggestion, nothing deleted without a Review Basket confirmation, and zero data leaves your phone.** It's the photo cleaner for people who don't trust photo cleaners.
 
 ## What it does
 
@@ -39,7 +41,7 @@ All four feed into a **Review Basket** — nothing deletes until you confirm. Ev
 
 ## Privacy
 
-All analysis runs **on your iPhone**. KeepKind:
+All analysis runs **on your iPhone**. Bide:
 
 - has no backend
 - does not upload your photos
@@ -65,10 +67,6 @@ Full privacy policy: [docs/privacy-policy.md](./docs/privacy-policy.md) *(coming
 - **SwiftData** for local index
 - **MetricKit** for diagnostics (no third-party SDKs)
 - **XCTest** + **XCUITest** for testing
-
-## Brand family: Kind Apps
-
-KeepKind is part of **Kind Apps** — simple public-good iOS apps with no ads, no accounts, no tricks. Sibling: **PageKind** (private scanner).
 
 ## Building
 

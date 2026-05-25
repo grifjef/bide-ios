@@ -1,6 +1,6 @@
-# KeepKind — Product Specification
+# Bide — Product Specification
 
-> **Source:** Original product spec authored by user, preserved verbatim. This is the source of truth for product decisions.
+> **Source:** Original product spec authored by user, with the name updated from Bide → Bide after availability research. Substance preserved verbatim; substitutions documented in [docs/decisions.md](../docs/decisions.md).
 
 ---
 
@@ -81,13 +81,13 @@ That is a deeper, more human problem.
 
 ## 4. Product name strategy
 
-**Decision: KeepKind: Photo Declutter**
+**Decision: Bide: Camera Roll Review**
 
-App Store name: **KeepKind: Photo Declutter**
-Tagline: **Keep the memories. Clear the clutter.**
-Subtitle: **Safe camera roll cleanup**
+App Store name: **Bide: Camera Roll Review**
+Tagline: **Bide your time. Keep what matters.**
+Subtitle: **Camera roll, at your pace**
 
-Brand family: **Kind Apps** — simple public-good apps with no ads, no accounts, no tricks. Siblings include PageKind (scanner).
+The word *bide* — "to dwell, to wait patiently" — is the entire product philosophy in one syllable. It signals: take your time, no rush, look twice before letting anything go. It is the calmest possible promise in a category dominated by anxiety-driven cleaners.
 
 ### Naming principles
 
@@ -95,18 +95,26 @@ Avoid: cleaner, booster, optimizer, AI cleaner, smart cleaner, phone cleaner, sw
 
 Use names that feel: safe, calm, private, human, trustworthy, memory-oriented, not scammy.
 
-### Backup names (in case KeepKind is unavailable)
+### Why Bide won
 
-1. **PhotoKind: Camera Roll Review** — "A kinder way to clean up photos."
-2. **TidyRoll: Photo Declutter** — "Tidy your camera roll safely."
-3. **MemoryKind: Photo Declutter** — "Protect the memories. Remove the noise."
-4. **RollSafe: Photo Declutter** — "Clean your camera roll without the panic."
+- **0 App Store apps** start with "Bide" — cleanest possible discovery surface
+- **bidephoto.com** (primary) and three defensive domains (bidephotos.com, usebide.com, bidethe.app) available
+- **No major trademark holder** to conflict with
+- Real English word with a clear, calming meaning
+- Distinctive enough to own as a brand
+- The slight obscurity is a feature: it gives us something to *teach*, which builds brand memory
+
+### Considered and rejected
+
+The initial pick (**Bide**) was rejected as too soft / healthcare-adjacent. Subsequent finalists (**Winnow**, **Cull**, **Keepsake**, **Memento**, **Cairn**, **Glade**, **Pith**) all had either App Store name conflicts in our category, major brand-holder trademark exposure, or universally squatted domains.
+
+Full audit trail of the naming process: [docs/decisions.md](../docs/decisions.md).
 
 ## 5. Core product thesis
 
 ### Promise
 
-> **Clean up your camera roll safely, privately, and without ads.**
+> **Take your time. Keep what matters. Nothing leaves your phone.**
 
 ### Public-service pledge
 
@@ -144,7 +152,7 @@ Cleaner apps often sprawl into unrelated utilities: contacts, calendars, email c
 
 ### What we do differently
 
-KeepKind competes on:
+Bide competes on:
 
 - trust
 - safe review
@@ -157,7 +165,7 @@ KeepKind competes on:
 
 Positioning statement:
 
-> **KeepKind is not a phone cleaner. It is a private camera-roll review tool that helps you keep what matters and remove what does not.**
+> **Bide is not a phone cleaner. It is a private camera-roll review tool that helps you keep what matters and remove what does not.**
 
 ## 7. Product principles
 
@@ -230,13 +238,13 @@ Avoid: contact cleanup, email cleanup, calendar cleanup, battery widgets, chargi
 One screen:
 
 > **Clean up your camera roll safely.**
-> KeepKind helps you review large videos, screenshots, and similar photos. Everything is analyzed on your iPhone. No ads. No account. No subscription.
+> Bide helps you review large videos, screenshots, and similar photos. Everything is analyzed on your iPhone. No ads. No account. No subscription.
 
 Buttons: Start Review, How privacy works.
 
 Then permission screen with honest copy:
 
-> "KeepKind needs photo access to find clutter. You can limit access, but full-library access gives the best cleanup results."
+> "Bide needs photo access to find clutter. You can limit access, but full-library access gives the best cleanup results."
 
 ### Home dashboard
 
@@ -471,7 +479,7 @@ Never "Delete forever." Use: "Move selected items to Recently Deleted." Then: "P
 
 ### In-app privacy copy
 
-> KeepKind analyzes your photo library on your iPhone. We do not upload your photos, sell data, show ads, or require an account.
+> Bide analyzes your photo library on your iPhone. We do not upload your photos, sell data, show ads, or require an account.
 
 Caveat:
 
@@ -485,7 +493,7 @@ Short and plain: what permissions are used, what data is stored locally, no serv
 
 ### App Store name
 
-**KeepKind: Photo Declutter**
+**Bide: Photo Declutter**
 
 ### Subtitle
 
@@ -507,26 +515,26 @@ photo cleaner, camera roll, duplicate photos, similar photos, delete photos, pho
 
 ### Description opening
 
-> KeepKind helps you review your camera roll and safely clear photo clutter. Find large videos, old screenshots, similar photos, and blurry shots. Keep what matters, move the rest to Recently Deleted, and reclaim space without ads, accounts, subscriptions, or cloud uploads by us.
+> Bide helps you review your camera roll and safely clear photo clutter. Find large videos, old screenshots, similar photos, and blurry shots. Keep what matters, move the rest to Recently Deleted, and reclaim space without ads, accounts, subscriptions, or cloud uploads by us.
 
 ## 17. Website strategy
 
 Domain candidates (verify availability):
-- `KeepKind.app`
-- `GetKeepKind.com`
-- `KeepKind.co`
-- `KeepKind.com`
+- `Bide.app`
+- `GetBide.com`
+- `Bide.co`
+- `Bide.com`
 
 ### Homepage
 
 Headline: **A safer way to clean up your camera roll.**
-Subhead: KeepKind helps you review large videos, screenshots, and similar photos privately on your iPhone. No ads. No account. No subscription. No photo uploads by us.
+Subhead: Bide helps you review large videos, screenshots, and similar photos privately on your iPhone. No ads. No account. No subscription. No photo uploads by us.
 
 Sections: Hero, How it works, Safety promise, Privacy promise, What it finds, FAQ, App Store link, Privacy policy.
 
 ### FAQ
 
-- Does KeepKind upload my photos?
+- Does Bide upload my photos?
 - Does it delete photos automatically?
 - Can I recover deleted photos?
 - Why does it need photo access?
@@ -656,7 +664,7 @@ After completion: "Did this feel safe?" Yes / Mostly / No + optional feedback.
 
 Most cleaner apps make people feel like prey.
 
-KeepKind should make people feel respected.
+Bide should make people feel respected.
 
 > "Your photos are your life. We will help you sort them carefully."
 
@@ -664,7 +672,7 @@ That is the differentiator.
 
 ## 24. Final recommended product
 
-# **KeepKind: Photo Declutter**
+# **Bide: Photo Declutter**
 
 **Promise:** Keep the memories. Clear the clutter.
 **Subtitle:** Safe camera roll cleanup
@@ -674,4 +682,4 @@ That is the differentiator.
 
 **Differentiator:** The photo cleaner for people who do not trust photo cleaners.
 
-**Strategic sequence:** Build the scanner first. Then build KeepKind. Tie them together under the **Kind Apps** brand family — simple, private, useful apps with no ads, no accounts, and no tricks.
+**Strategic sequence:** PageKind (private scanner, separate project) and Bide (this app) are independent products that share infrastructure but stand alone as brands. No parent brand umbrella for now.

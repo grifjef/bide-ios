@@ -4,7 +4,65 @@
 
 ---
 
-## 2026-05-25 — Name verification: KeepKind cleared
+## 2026-05-25 — Final name: **Bide**
+
+**Decision:** Project renamed from KeepKind → Bide.
+
+**App Store name:** Bide: Camera Roll Review
+**Tagline:** Bide your time. Keep what matters.
+**Subtitle:** Camera roll, at your pace
+**Bundle ID:** `com.bidephoto.bide`
+**Primary domain:** `bidephoto.com` (to purchase)
+**Defensive domains:** `bidephotos.com`, `usebide.com`, `bidethe.app`
+
+### Why we changed from KeepKind
+
+User feedback: KeepKind sounded healthcare-adjacent / kid-app-ish. The "Kind Apps" parent brand framing was dropped along with the name.
+
+### The search and what we learned
+
+| Candidate | Outcome | Why eliminated |
+|---|---|---|
+| Winnow (initial pick after rejecting KeepKind) | ❌ | 5 active App Store apps using "Winnow" + Winnow Solutions (B2B food-waste AI, 94 countries, likely trademarked) + every domain variant taken (.app, .com, .io, .co, .photo, .photos, .studio, .gallery, .so, .ink, .fyi + every get/try/use/-app variant) |
+| Cull | ❌ | Direct App Store competitor exists: "Cull - AI Photo Cleaner" |
+| Keepsake | ❌ | 5 apps in App Store including "Keepsake Frames" (Photo & Video) |
+| Memento | ❌ | 9 apps including "Memento - Lasting Moments" (Photo & Video) |
+| Cairn | ❌ | 7 apps in App Store, all domains taken |
+| The Edit | ❌ | Editor/edit space is saturated |
+| Glade | ⚠️ | 0 App Store conflicts but SC Johnson air-freshener trademark exposure (different class but litigious $20B company) |
+| Pith | ⚠️ | 1 non-photo App Store conflict + two .com variants available |
+| **Bide** | ✅ | **0 App Store conflicts; bidephoto.com + 3 defensive domains available; no major trademark holder** |
+
+**Universal observation:** essentially every common short English word is squatted across every reasonable TLD in 2026. The naming exercise was less "pick a great word" and more "find a word that survived the speculative-domain era."
+
+### Why Bide
+
+- **Zero App Store apps** start with "Bide" — cleanest possible discovery
+- **bidephoto.com**, **bidephotos.com**, **usebide.com**, **bidethe.app** all available for purchase (~$12/yr each)
+- **No major trademark holder** to dispute
+- The word "bide" — *to dwell, to wait patiently* — is the entire product philosophy in one syllable
+- Slight obscurity is a feature: gives us something to teach, which builds brand memory
+- Real English word, not invented — survives "what does that name mean?" questions
+
+### Open follow-up
+
+- Purchase `bidephoto.com` + 2-3 defensive variants (today)
+- Reserve App Store Connect name "Bide: Camera Roll Review" once Apple Developer is confirmed active
+- File Intent-to-Use USPTO trademark on BIDE in class 9 (mobile software) once we have public-facing artifacts (~$350 fee, optional)
+
+---
+
+## 2026-05-25 — Drop "Kind Apps" parent-brand framing
+
+**Decision:** No parent brand umbrella for Bide. PageKind (the user's separate scanner app) and Bide stand alone, sharing infrastructure but not branding.
+
+**Rationale:** User feedback that "KeepKind" sounded healthcare-adjacent extended to the broader "Kind Apps" framing. Each app in the portfolio can earn its own identity.
+
+**Open:** Revisit if a third app is added and a unifying brand becomes worth investing in.
+
+---
+
+## 2026-05-25 — Name verification: KeepKind cleared (*superseded — see Bide entry above*)
 
 **Decision:** Commit to **KeepKind: Photo Declutter**.
 

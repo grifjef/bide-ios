@@ -1,4 +1,4 @@
-# KeepKind iOS — Master Plan
+# Bide iOS — Master Plan
 
 > **Last updated:** 2026-05-25
 > **Status:** Phase 0 — Setup (in progress)
@@ -9,7 +9,6 @@
 ## Quick navigation
 
 - [Product](#product)
-- [Brand family](#brand-family-kind-apps)
 - [Tech stack](#tech-stack)
 - [Infrastructure](#infrastructure-mirrors-bluebook-stack-adapted-for-ios)
 - [Architecture](#architecture)
@@ -25,22 +24,18 @@
 
 ## Product
 
-**KeepKind: Photo Declutter** — a private, on-device photo review app that helps people safely reclaim their camera roll without losing memories.
+**Bide: Camera Roll Review** — a private, on-device photo review app that helps people safely reclaim their camera roll without losing memories.
 
-- **Promise:** Keep the memories. Clear the clutter.
-- **App Store subtitle:** Safe camera roll cleanup
+- **Promise:** Bide your time. Keep what matters.
+- **App Store subtitle:** Camera roll, at your pace
 - **Differentiator:** *The photo cleaner for people who don't trust photo cleaners.*
+
+The word *bide* — "to dwell, to wait patiently" — sets the entire tone: this app respects the user's pace, treats every photo as worth a second look, and never rushes you toward a delete button.
 
 Full product specification: [product/spec.md](./product/spec.md)
 
-## Brand family: Kind Apps
+## Brand pledge
 
-Simple public-good iOS apps with no ads, no accounts, no tracking SDKs.
-
-- **PageKind** — private scanner (built separately)
-- **KeepKind** — this app
-
-Brand pledge:
 - Free
 - No ads
 - No subscriptions
@@ -67,20 +62,23 @@ Brand pledge:
 | Linting | SwiftLint + swift-format | Standard Swift toolchain |
 | Beta dist | TestFlight | Apple-native |
 | Production dist | App Store | Apple-native |
+| Bundle ID | `com.bidephoto.bide` | Reverse-DNS of our primary domain |
 
 ## Infrastructure (mirrors BlueBook stack, adapted for iOS)
 
 | Concern | Service | Detail |
 |---|---|---|
-| Source | GitHub | `github.com/grifjef/keepkind-ios` (public) |
+| Source | GitHub | `github.com/grifjef/bide-ios` (public) |
 | CI/CD | GitHub Actions | `macos-latest` runners; `xcodebuild`, SwiftLint, tests, SonarCloud |
-| Code quality | SonarCloud | `grifjef_keepkind-ios` project, Swift analyzer |
+| Code quality | SonarCloud | `grifjef_bide-ios` project, Swift analyzer |
 | Security review | Claude `/security-review` | Run on PRs via workflow |
 | Dependencies | Dependabot | Swift Package Manager ecosystem |
-| Issue tracking | Jira | `KK` project at `grifjef.atlassian.net` |
-| Documentation | Confluence | `KK` space at `grifjef-1773158363073.atlassian.net/wiki` |
+| Issue tracking | Jira | `BD` project at `grifjef.atlassian.net` |
+| Documentation | Confluence | `BD` space at `grifjef-1773158363073.atlassian.net/wiki` |
 | Crash reporting | MetricKit | Apple-only — no Sentry/Firebase/Crashlytics |
-| Privacy policy | GitHub Pages | hosted at repo's `gh-pages` until `keepkind.app` domain set up |
+| Privacy policy | GitHub Pages | hosted at repo's `gh-pages` until `bidephoto.com` is configured |
+| Primary domain | `bidephoto.com` | To purchase (~$12/yr Cloudflare Registrar) |
+| Defensive domains | `bidephotos.com`, `usebide.com`, `bidethe.app` | All available |
 
 ## Architecture
 
@@ -136,12 +134,13 @@ Full detail: [docs/safety-model.md](./docs/safety-model.md) (to be written).
 ## Phased delivery
 
 ### Phase 0 — Setup (today, 1–2 hrs) — **in progress**
-- Verify name availability (App Store, USPTO, domains)
-- Create GitHub repo `grifjef/keepkind-ios`
-- Create Jira project `KK` + epics from spec
-- Create Confluence space `KK` + skeleton pages
-- Create SonarCloud Swift project, wire `SONAR_TOKEN`
-- Confirm Apple Developer enrollment status (or start enrollment in parallel)
+- ✅ Verify name availability (Bide cleared: 0 App Store conflicts, multiple domains available)
+- ✅ Create GitHub repo `grifjef/bide-ios`
+- ⏳ Create Jira project `BD` + epics from spec
+- ⏳ Create Confluence space `BD` + skeleton pages
+- ⏳ Create SonarCloud Swift project, wire `SONAR_TOKEN`
+- ⏳ Confirm Apple Developer enrollment status (or start enrollment in parallel)
+- ⏳ Install Xcode (~10–15 GB download)
 
 ### Phase 1 — Core build (today, 3–5 hrs)
 - Xcode project scaffold (SwiftUI, iOS 17+)
@@ -156,7 +155,7 @@ Full detail: [docs/safety-model.md](./docs/safety-model.md) (to be written).
 
 ### Phase 2 — TestFlight + App Store submission (today / tomorrow)
 - App icon (1024×1024 source, all variant sizes)
-- Privacy policy page (hosted on GitHub Pages until `keepkind.app` is purchased)
+- Privacy policy page (hosted on GitHub Pages until `bidephoto.com` is purchased and configured)
 - App Store Connect listing — name, subtitle, description, keywords, screenshots
 - Privacy questionnaire (PhotoKit access disclosure, no third-party tracking)
 - Archive + upload via Xcode
@@ -198,19 +197,18 @@ Built using `anthropic-skills:skill-creator`.
 ## Open decisions
 
 1. **Apple Developer enrollment status** — checking now via developer.apple.com
-2. **Name availability** — verifying KeepKind across App Store, USPTO, domains
-3. **App icon source** — designed in SwiftUI? Hire designer? SF Symbols-based placeholder for first TestFlight?
-4. **Privacy policy hosting** — GitHub Pages on repo until `keepkind.app` domain bought
-5. **Brand color palette** — proposed: warm off-white background, muted sage green primary, dark teal accent. Confirm before icon design.
-6. **iOS version floor** — recommending iOS 17+. Confirm OK to drop iOS 16.
+2. **App icon source** — designed in SwiftUI? Hire designer? SF Symbols-based placeholder for first TestFlight?
+3. **Brand color palette** — proposed: warm off-white background, muted forest-green primary, slate-blue accent. Confirm before icon design.
+4. **iOS version floor** — recommending iOS 17+. Confirm OK to drop iOS 16.
+5. **App Store full name** — `Bide: Camera Roll Review` (current pick) vs `Bide: Photo Review` vs `Bide` alone.
 
 ## Risks and mitigations
 
 | Risk | Likelihood | Mitigation |
 |---|---|---|
 | Apple Developer enrollment not active | Unknown until checked | Start enrollment today in parallel; sideload via free provisioning meanwhile |
+| Xcode not installed (confirmed) | Resolved-once-installed | Mac App Store or direct from developer.apple.com — start download immediately |
 | App Store review delay / rejection | Medium (cleaner-app category gets extra scrutiny) | Honest copy, no scare tactics, clear PhotoKit usage strings, pre-empt with privacy policy + review-first UX evidence in screenshots |
-| Name trademark / App Store conflict | Unknown until checked | Verifying today; backups: PhotoKind, TidyRoll |
 | False positives in similar-photo clustering | High in Phase 3 | Conservative thresholds, "Suggested keeper" framing, explanation strings, Review Basket safety net |
 | iCloud-only assets break scan | Medium | `PHCachingImageManager` with `isNetworkAccessAllowed = false` for thumbnails; surface "needs download" state clearly |
 | Performance death on 50k+ libraries | Medium | Stage processing, time-bucket before comparison, byte estimation by sampling |
@@ -236,7 +234,7 @@ From spec §20 — non-negotiable:
 Mirrors BlueBook workflow:
 
 1. **Plan** — Create Jira item under the right Epic. Status `Dev In Progress` when started.
-2. **Branch** — `feature/KK-<id>-short-description`
+2. **Branch** — `feature/BD-<id>-short-description`
 3. **Implement + Test** — Code + XCTest tests. All checks must pass: SwiftLint, build, tests, SonarCloud.
 4. **Document** — Update Confluence pages. Update `CLAUDE.md` if architecture / commands / patterns changed.
 5. **PR** — Pushes trigger CI. Claude `/security-review` runs on PR. Merges trigger Apple-Cloud builds (later, when fastlane is set up).
@@ -252,5 +250,5 @@ Mirrors BlueBook workflow:
 - `docs/similar-photo-algorithm.md` — feature print + clustering (to be written)
 - `docs/privacy-policy.md` — final copy for hosting (to be written)
 - `docs/app-store-listing.md` — final listing copy (to be written)
-- `docs/decisions.md` — decision log with rationale (to be written)
-- `CLAUDE.md` — project context for future Claude Code sessions (to be written)
+- [`docs/decisions.md`](./docs/decisions.md) — decision log with rationale
+- [`CLAUDE.md`](./CLAUDE.md) — project context for future Claude Code sessions

@@ -1,10 +1,12 @@
-# CLAUDE.md — KeepKind iOS
+# CLAUDE.md — Bide iOS
 
 > Project context for Claude Code sessions. Read this first when starting work on this repo.
 
 ## What this is
 
-**KeepKind: Photo Declutter** — a native iOS app that helps people safely review and clear photo-roll clutter on their iPhone. On-device only, no ads/account/subscription/tracking. Part of the **Kind Apps** brand family (sibling: PageKind, a scanner).
+**Bide: Camera Roll Review** — a native iOS app that helps people safely review and clear photo-roll clutter on their iPhone at their own pace. On-device only, no ads/account/subscription/tracking.
+
+The name *bide* means "to dwell, to wait patiently" — the entire product philosophy.
 
 Master plan: [PLAN.md](./PLAN.md)
 Product spec (source of truth for product decisions): [product/spec.md](./product/spec.md)
@@ -16,9 +18,9 @@ Live URL: *(App Store TBD once submitted)*
 
 ```
 /
-├── KeepKind/                # Xcode project (to be scaffolded)
-├── KeepKindTests/           # XCTest unit tests
-├── KeepKindUITests/         # XCUITest UI tests
+├── Bide/                    # Xcode project (to be scaffolded)
+├── BideTests/               # XCTest unit tests
+├── BideUITests/             # XCUITest UI tests
 ├── product/
 │   └── spec.md              # full product specification
 ├── docs/
@@ -53,6 +55,7 @@ Live URL: *(App Store TBD once submitted)*
 - **Language:** Swift 5.10
 - **UI:** SwiftUI
 - **iOS deployment target:** 17.0
+- **Bundle ID:** `com.bidephoto.bide`
 - **Photo access:** PhotoKit
 - **Image analysis:** Vision (`VNGenerateImageFeaturePrintRequest`)
 - **Persistence:** SwiftData (local index)
@@ -66,12 +69,12 @@ Live URL: *(App Store TBD once submitted)*
 ```bash
 # Build for Simulator
 xcodebuild build \
-  -scheme KeepKind \
+  -scheme Bide \
   -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest'
 
 # Run tests
 xcodebuild test \
-  -scheme KeepKind \
+  -scheme Bide \
   -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
   -enableCodeCoverage YES
 
@@ -80,12 +83,12 @@ swiftlint --strict
 
 # Archive (release)
 xcodebuild archive \
-  -scheme KeepKind \
+  -scheme Bide \
   -configuration Release \
-  -archivePath ./build/KeepKind.xcarchive
+  -archivePath ./build/Bide.xcarchive
 
 # Open in Xcode
-open KeepKind.xcodeproj
+open Bide.xcodeproj
 ```
 
 See `.claude/skills/ios-build/` for the full set of build shortcuts.
@@ -100,8 +103,8 @@ CI: GitHub Actions on `macos-latest`. Jobs: SwiftLint, build, test, SonarCloud s
 
 ## Design conventions
 
-- **Voice:** calm, safe, respectful. Never alarmist. Never urgent. No "junk", "danger", "boost", "magic", "AI cleaner" language.
-- **Color palette:** *(to confirm)* warm off-white background, muted sage green primary, dark teal accent
+- **Voice:** calm, patient, deliberate. Never alarmist. Never urgent. No "junk", "danger", "boost", "magic", "AI cleaner" language.
+- **Color palette:** *(to confirm)* warm off-white background, muted forest-green primary, slate-blue accent
 - **Typography:** SF Pro, Dynamic Type respected everywhere
 - **Accessibility:** VoiceOver-clean, Dynamic Type-clean, contrast-checked from v1
 - **Copy rules:**
@@ -109,20 +112,21 @@ CI: GitHub Actions on `macos-latest`. Jobs: SwiftLint, build, test, SonarCloud s
   - Never "Best photo" — use "Suggested keeper"
   - Always explain recommendations ("Suggested because it is sharper", "Suggested because it is favorited")
   - Acknowledge Apple's 30-day Recently Deleted recovery window prominently
+  - Lean into the "bide" identity: "Take your time", "No rush", "Come back later", "Pause when you want"
 
 ## Project management
 
-- **GitHub:** [grifjef/keepkind-ios](https://github.com/grifjef/keepkind-ios) (public)
-- **Jira:** project **KK** at [grifjef.atlassian.net](https://grifjef.atlassian.net)
-- **Confluence:** space **KK** at [grifjef-1773158363073.atlassian.net/wiki](https://grifjef-1773158363073.atlassian.net/wiki)
-- **SonarCloud:** [grifjef_keepkind-ios](https://sonarcloud.io/organizations/grifjef)
+- **GitHub:** [grifjef/bide-ios](https://github.com/grifjef/bide-ios) (public)
+- **Jira:** project **BD** at [grifjef.atlassian.net](https://grifjef.atlassian.net)
+- **Confluence:** space **BD** at [grifjef-1773158363073.atlassian.net/wiki](https://grifjef-1773158363073.atlassian.net/wiki)
+- **SonarCloud:** [grifjef_bide-ios](https://sonarcloud.io/organizations/grifjef)
 
 ## Development process
 
 For every feature / bug / enhancement:
 
 1. **Plan** — Create Jira item under the right Epic. Set status `Dev In Progress` when starting.
-2. **Branch** — `feature/KK-<id>-short-description` (e.g. `feature/KK-42-large-videos-deletion`).
+2. **Branch** — `feature/BD-<id>-short-description` (e.g. `feature/BD-42-large-videos-deletion`).
 3. **Implement + Test** — Code + XCTest. All checks must pass: SwiftLint, build, tests.
 4. **Document** — Update relevant Confluence pages. Update CLAUDE.md if commands/architecture/conventions changed.
 5. **PR** — Push. CI validates. Claude `/security-review` runs on PR.

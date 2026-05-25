@@ -1,0 +1,108 @@
+# xcodegen spec for Bide iOS
+# Regenerate the Xcode project with: xcodegen generate
+# (Bide.xcodeproj is gitignored; this file is the source of truth.)
+
+name: Bide
+options:
+  bundleIdPrefix: com.bidephoto
+  deploymentTarget:
+    iOS: "17.0"
+  groupSortPosition: top
+  generateEmptyDirectories: true
+  developmentLanguage: en
+
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: NO
+    GCC_TREAT_WARNINGS_AS_ERRORS: NO
+    CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER: YES
+    ENABLE_HARDENED_RUNTIME: YES
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  Bide:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Bide
+        excludes:
+          - "**/*.md"
+    resources:
+      - path: Bide/Assets.xcassets
+        optional: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.bidephoto.bide
+        PRODUCT_NAME: Bide
+        GENERATE_INFOPLIST_FILE: YES
+        DEVELOPMENT_ASSET_PATHS: '"Bide/Preview Content"'
+        ENABLE_PREVIEWS: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait"
+        INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleDefault
+        INFOPLIST_KEY_CFBundleDisplayName: Bide
+        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "Bide reads your photo library on this device to find clutter — large videos, screenshots, and similar shots — so you can review and clear what you want. Nothing is uploaded by us."
+        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: "Bide does not add photos. This permission is requested as a fallback only; you can deny it without affecting features."
+        TARGETED_DEVICE_FAMILY: "1" # iPhone only
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+
+  BideTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: BideTests
+    dependencies:
+      - target: Bide
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.bidephoto.bide.tests
+        GENERATE_INFOPLIST_FILE: YES
+
+  BideUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: BideUITests
+    dependencies:
+      - target: Bide
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.bidephoto.bide.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Bide
+
+schemes:
+  Bide:
+    build:
+      targets:
+        Bide: all
+        BideTests: [test]
+        BideUITests: [test]
+    test:
+      gatherCoverageData: true
+      coverageTargets:
+        - Bide
+      targets:
+        - BideTests
+        - BideUITests
+    run:
+      config: Debug
+    archive:
+      config: Release
+    profile:
+      config: Release
+    analyze:
+      config: Debug

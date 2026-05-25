@@ -1,0 +1,87 @@
+# Xcode
+build/
+DerivedData/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+Packages/
+Package.pins
+Package.resolved
+*.xcodeproj/xcshareddata/swiftpm/
+.swiftpm/
+
+# CocoaPods (not using, but just in case)
+Pods/
+
+# Carthage (not using, but just in case)
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*~
+
+# Secrets / credentials (NEVER commit)
+*.p12
+*.cer
+*.mobileprovision
+*.p8
+AuthKey_*.p8
+.env
+.env.local
+.env.*.local
+secrets.json
+fastlane/Appfile
+fastlane/Fastfile.local
+
+# Build outputs
+*.app
+*.appex
+*.framework
+*.xcarchive
+
+# Test results
+test_output/
+*.xcresult/
+coverage.xml
+sonar-report.xml
+
+# Claude Code local
+.claude/local/

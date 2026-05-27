@@ -1,0 +1,44 @@
+name: Claude security review
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  security-review:
+    name: Claude /security-review
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: ${{ !github.event.pull_request.draft }}
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node (Claude action runtime)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # The Claude security-review action will run /security-review against
+      # the PR diff and post findings as a PR comment. Requires
+      # ANTHROPIC_API_KEY in repo secrets.
+      #
+      # Until ANTHROPIC_API_KEY is set, this job is non-blocking
+      # (continue-on-error). Flip to a hard failure once the key is added and
+      # the first run is clean.
+      - name: Claude security review
+        continue-on-error: true
+        uses: anthropics/claude-code-action@main
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          mode: security-review
+          base_branch: main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

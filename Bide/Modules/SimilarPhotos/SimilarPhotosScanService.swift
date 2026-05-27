@@ -46,9 +46,69 @@ final class SimilarPhotosScanService {
 
     private var currentTask: Task<Void, Never>?
 
+    /// Subscribes to library changes so we can invalidate stale clusters when
+    /// the user (or iCloud) modifies the library while we're scanning or while
+    /// the user is reviewing.
+    private var libraryObserver: PhotoLibraryObserver?
+
     init(photoLibrary: PhotoLibraryService, scanLimit: Int = 500) {
         self.photoLibrary = photoLibrary
         self.scanLimit = scanLimit
+        // Register an observer that drops cached clusters when the underlying
+        // assets change. We don't auto-rescan — we just mark the results stale.
+        Task { @MainActor in
+            self.libraryObserver = PhotoLibraryObserver { [weak self] change in
+                Task { @MainActor in
+                    self?.handleLibraryChange(change)
+                }
+            }
+        }
+    }
+
+    /// Public entry point so the UI can react too (e.g. "Library changed, rescan?").
+    private(set) var libraryHasChangedSinceLastScan: Bool = false
+
+    private func handleLibraryChange(_ change: PHChange) {
+        // Remove any cluster whose suggested keeper or members were deleted.
+        // Keep everything else — the user might still be reviewing the cluster.
+        let identifiers = Set(clusters.flatMap { $0.candidates.map(\.id) })
+        guard !identifiers.isEmpty else { return }
+
+        let assets = PHAsset.fetchAssets(withLocalIdentifiers: Array(identifiers), options: nil)
+        var stillPresent = Set<String>()
+        assets.enumerateObjects { asset, _, _ in
+            stillPresent.insert(asset.localIdentifier)
+        }
+
+        let removed = identifiers.subtracting(stillPresent)
+        if removed.isEmpty {
+            // The library changed but our assets are intact. Mark stale so the
+            // user can choose to rescan.
+            libraryHasChangedSinceLastScan = true
+            return
+        }
+
+        // Drop clusters where the keeper is gone; trim others' candidate lists.
+        var updated: [PhotoCluster] = []
+        for cluster in clusters {
+            if removed.contains(cluster.suggestedKeeperId) {
+                continue
+            }
+            let remaining = cluster.candidates.filter { !removed.contains($0.id) }
+            // A cluster needs at least 2 members to be useful.
+            if remaining.count < 2 { continue }
+            updated.append(
+                PhotoCluster(
+                    id: cluster.id,
+                    representativeDate: cluster.representativeDate,
+                    candidates: remaining,
+                    suggestedKeeperId: cluster.suggestedKeeperId,
+                    suggestedKeeperReason: cluster.suggestedKeeperReason
+                )
+            )
+        }
+        clusters = updated
+        libraryHasChangedSinceLastScan = true
     }
 
     // MARK: - Public API

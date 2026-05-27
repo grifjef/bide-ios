@@ -90,3 +90,8 @@ sonar-report.xml
 # Claude Code local
 .claude/local/
 .secrets/
+
+# Python (for App Store Connect helper scripts)
+__pycache__/
+*.pyc
+*.pyo

@@ -59,13 +59,19 @@ struct DashboardView: View {
                         .buttonStyle(.plain)
                         .disabled(!photoLibrary.hasReadAccess)
 
-                        ModuleCard(
-                            icon: "scribble.variable",
-                            title: "Blurry shots",
-                            subtitle: "Coming soon — never auto-suggested.",
-                            disabled: true,
-                            badge: "Soon"
-                        )
+                        NavigationLink {
+                            BlurryShotsView()
+                        } label: {
+                            ModuleCard(
+                                icon: "scribble.variable",
+                                title: "Blurry shots",
+                                subtitle: "Candidates only — never auto-suggested.",
+                                disabled: !photoLibrary.hasReadAccess,
+                                badge: "Beta"
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!photoLibrary.hasReadAccess)
                     }
                 }
                 .padding(BideTheme.m)

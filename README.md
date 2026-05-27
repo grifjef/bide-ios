@@ -70,7 +70,34 @@ Full privacy policy: [docs/privacy-policy.md](./docs/privacy-policy.md) *(coming
 
 ## Building
 
-*(Build instructions will appear here once the Xcode project is scaffolded.)*
+Bide uses **xcodegen** to keep the Xcode project source-controlled and merge-friendly — `Bide.xcodeproj/` is gitignored; `project.yml` is the source of truth.
+
+```bash
+# One-time setup
+brew install xcodegen
+
+# Generate the Xcode project from project.yml
+xcodegen generate
+
+# Build for Simulator
+xcodebuild build \
+  -project Bide.xcodeproj \
+  -scheme Bide \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  CODE_SIGNING_ALLOWED=NO
+
+# Run unit + UI tests
+xcodebuild test \
+  -project Bide.xcodeproj \
+  -scheme Bide \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  CODE_SIGNING_ALLOWED=NO
+
+# Open in Xcode for interactive work
+open Bide.xcodeproj
+```
+
+The `.claude/skills/ios-build/` skill contains the full set of build/archive shortcuts including signing flags, scheme listing, and DerivedData reset commands.
 
 ## Contributing
 

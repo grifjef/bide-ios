@@ -36,7 +36,20 @@ final class PhotoLibraryService {
     // MARK: - Fetching
 
     /// Fetch video assets sorted by file size descending.
-    /// Note: fileSize lookup is somewhat expensive (per-asset), so we cap at `limit`.
+    ///
+    /// Strategy (per CLAUDE.md gotcha — `PHAssetResource.fileSize` is per-asset
+    /// expensive, so don't iterate everything):
+    ///   1. Pass 1: enumerate ALL videos, compute a cheap byte ESTIMATE from
+    ///      `pixelWidth × pixelHeight × duration` via a bitrate heuristic.
+    ///   2. Sort by estimate descending, take top `limit`.
+    ///   3. Pass 2: for the top `limit` only, query `PHAssetResource.fileSize`
+    ///      to get the real bytes. Fall back to the estimate if real bytes
+    ///      come back zero (iCloud-not-downloaded etc).
+    ///   4. Re-sort by actual bytes.
+    ///
+    /// For a library of 2 000 videos we now do ~2 000 cheap enumerations plus
+    /// ~`limit` (default 200) expensive resource lookups, instead of 2 000
+    /// expensive lookups. ~10× faster on large libraries.
     func fetchLargeVideos(limit: Int = 200) async -> [LargeVideoSummary] {
         await Task.detached(priority: .userInitiated) {
             let options = PHFetchOptions()
@@ -44,17 +57,40 @@ final class PhotoLibraryService {
                 format: "mediaType == %d",
                 PHAssetMediaType.video.rawValue
             )
-            // Sort by date first to give us a stable iteration order.
             options.sortDescriptors = [
                 NSSortDescriptor(key: "creationDate", ascending: false)
             ]
 
             let fetched = PHAsset.fetchAssets(with: options)
-            var summaries: [LargeVideoSummary] = []
-            summaries.reserveCapacity(min(fetched.count, 1000))
 
+            // Pass 1: cheap enumeration with size estimate
+            struct PreliminaryRow {
+                let asset: PHAsset
+                let estimate: Int64
+            }
+            var prelim: [PreliminaryRow] = []
+            prelim.reserveCapacity(fetched.count)
             fetched.enumerateObjects { asset, _, _ in
-                let size = Self.fileSize(of: asset)
+                let estimate = Self.estimatedVideoBytes(
+                    pixelWidth: asset.pixelWidth,
+                    pixelHeight: asset.pixelHeight,
+                    duration: asset.duration
+                )
+                prelim.append(PreliminaryRow(asset: asset, estimate: estimate))
+            }
+
+            // Pass 2: take top N by estimate, fetch real fileSize for those only
+            let topCandidates = prelim
+                .sorted { $0.estimate > $1.estimate }
+                .prefix(limit)
+
+            var summaries: [LargeVideoSummary] = []
+            summaries.reserveCapacity(topCandidates.count)
+            for row in topCandidates {
+                let asset = row.asset
+                let realSize = Self.fileSize(of: asset)
+                let bytes = realSize > 0 ? realSize : row.estimate
+
                 summaries.append(
                     LargeVideoSummary(
                         localIdentifier: asset.localIdentifier,
@@ -62,7 +98,7 @@ final class PhotoLibraryService {
                         duration: asset.duration,
                         pixelWidth: asset.pixelWidth,
                         pixelHeight: asset.pixelHeight,
-                        fileSize: size,
+                        fileSize: bytes,
                         isFavorite: asset.isFavorite,
                         isHidden: asset.isHidden,
                         sourceTypeIsCamera: asset.sourceType == .typeUserLibrary
@@ -70,12 +106,36 @@ final class PhotoLibraryService {
                 )
             }
 
-            return Array(
-                summaries
-                    .sorted { $0.fileSize > $1.fileSize }
-                    .prefix(limit)
-            )
+            // Real sizes may shuffle the order slightly vs. estimate-sort
+            return summaries.sorted { $0.fileSize > $1.fileSize }
         }.value
+    }
+
+    /// Cheap bitrate-based estimate of an H.264/HEVC video's byte size.
+    /// Conservative — undershoots slightly so we don't promise more storage
+    /// reclaim than the user will see. Public so the LargeVideos module can
+    /// label estimated rows in the UI if needed.
+    ///
+    /// Heuristic (approx Apple's modern HEVC defaults):
+    ///   - 4K-ish (≥ 3.5 Mpx): ~6 MB/s
+    ///   - 1080p-ish (≥ 1.5 Mpx): ~1.5 MB/s
+    ///   - 720p or lower: ~0.6 MB/s
+    nonisolated static func estimatedVideoBytes(
+        pixelWidth: Int,
+        pixelHeight: Int,
+        duration: TimeInterval
+    ) -> Int64 {
+        guard duration > 0, pixelWidth > 0, pixelHeight > 0 else { return 0 }
+        let pixels = pixelWidth * pixelHeight
+        let bytesPerSec: Int64
+        if pixels >= 3_500_000 {
+            bytesPerSec = 6_000_000
+        } else if pixels >= 1_500_000 {
+            bytesPerSec = 1_500_000
+        } else {
+            bytesPerSec = 600_000
+        }
+        return Int64(Double(bytesPerSec) * duration)
     }
 
     /// Fetch photo candidates for similar-photo clustering. Returns lightweight value

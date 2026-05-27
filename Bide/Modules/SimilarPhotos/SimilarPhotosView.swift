@@ -238,6 +238,21 @@ private struct ClusterCard: View {
                 .foregroundStyle(BideTheme.textTertiary)
         }
         .bideCard()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityHint("Double-tap to review this cluster")
+    }
+
+    private var accessibilityLabel: String {
+        let count = cluster.candidates.count
+        let date = formattedDate(cluster.representativeDate)
+        let reclaim = cluster.formattedPotentialReclaim
+        let inBasket = cluster.nonKeeperCandidates.filter { basket.contains(localIdentifier: $0.id) }.count
+        var parts = ["\(count) similar photos from \(date)", "Up to \(reclaim) reclaimable"]
+        if inBasket > 0 {
+            parts.append("\(inBasket) already in basket")
+        }
+        return parts.joined(separator: ". ")
     }
 
     private func formattedDate(_ date: Date) -> String {

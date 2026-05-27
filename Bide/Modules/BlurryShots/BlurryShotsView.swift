@@ -213,6 +213,8 @@ private struct BlurryRow: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(accessibilityLabel)
+        .accessibilityValue(isSelected ? "Selected for review basket" : "Not selected")
+        .accessibilityHint("Double-tap to add to Review Basket")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 

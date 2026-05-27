@@ -15,6 +15,8 @@ struct DashboardView: View {
                     // Permission state banner
                     if !photoLibrary.hasReadAccess {
                         permissionBanner
+                    } else if photoLibrary.authStatus == .limited {
+                        LimitedLibraryBanner()
                     }
 
                     // Module cards
@@ -149,6 +151,8 @@ struct DashboardView: View {
             .clipShape(RoundedRectangle(cornerRadius: BideTheme.cornerMedium, style: .continuous))
             .padding(BideTheme.m)
         }
+        .accessibilityLabel("Open Review Basket. \(basket.count) item\(basket.count == 1 ? "" : "s"), \(basket.formattedTotalSize) total.")
+        .accessibilityHint("Double-tap to review and confirm before moving items to Recently Deleted.")
     }
 }
 

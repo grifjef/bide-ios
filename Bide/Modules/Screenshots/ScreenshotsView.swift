@@ -272,6 +272,8 @@ private struct ScreenshotTile: View {
         .buttonStyle(.plain)
         .disabled(protection != nil)
         .accessibilityLabel(accessibilityLabel)
+        .accessibilityValue(accessibilityValue)
+        .accessibilityHint(accessibilityHint)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
@@ -281,5 +283,13 @@ private struct ScreenshotTile: View {
             return "\(base). Protected: \(protection.displayName.lowercased())."
         }
         return base
+    }
+
+    private var accessibilityValue: String {
+        isSelected ? "Selected for review basket" : "Not selected"
+    }
+
+    private var accessibilityHint: String {
+        protection != nil ? "" : "Double-tap to add to Review Basket"
     }
 }

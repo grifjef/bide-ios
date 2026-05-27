@@ -128,6 +128,23 @@ private struct CandidateRow: View {
         .buttonStyle(.plain)
         .disabled(candidate.isFavorite || candidate.isHidden)
         .opacity(candidate.isFavorite || candidate.isHidden ? 0.55 : 1.0)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityValue(isSelected ? "Selected for review basket" : "Not selected")
+        .accessibilityHint(candidate.isFavorite || candidate.isHidden ? "" : "Double-tap to add to Review Basket")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private var accessibilityLabel: String {
+        let date = formattedDate(candidate.creationDate)
+        let dims = "\(candidate.pixelWidth) by \(candidate.pixelHeight)"
+        let size = formattedSize(candidate.estimatedFileSize)
+        var parts = ["Photo from \(date)", dims, size]
+        if candidate.isFavorite {
+            parts.append("Favorite, protected")
+        } else if candidate.isHidden {
+            parts.append("Hidden, protected")
+        }
+        return parts.joined(separator: ". ")
     }
 
     private func formattedDate(_ date: Date) -> String {

@@ -186,14 +186,25 @@ private struct VideoRow: View {
         .disabled(video.isProtected)
         .opacity(video.isProtected ? 0.55 : 1.0)
         .accessibilityLabel(accessibilityLabel)
+        .accessibilityValue(accessibilityValue)
+        .accessibilityHint(accessibilityHint ?? "")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     private var accessibilityLabel: String {
         let base = "Video, \(video.formattedSize), \(video.formattedDuration), from \(video.formattedDate)"
         if video.isProtected {
-            return "\(base). Protected — cannot select."
+            let reason = video.isFavorite ? "favorite" : "hidden"
+            return "\(base). Protected because it's a \(reason); cannot select."
         }
         return base
+    }
+
+    private var accessibilityValue: String {
+        isSelected ? "Selected for review basket" : "Not selected"
+    }
+
+    private var accessibilityHint: String? {
+        video.isProtected ? nil : "Double-tap to add to Review Basket"
     }
 }

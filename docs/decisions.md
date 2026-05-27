@@ -4,6 +4,36 @@
 
 ---
 
+## 2026-05-27 — Bide v1.0 (build 1) submitted to the App Store
+
+**Status:** 1.0 Waiting for Review
+
+Submitted at ~10:55 AM PT. Apple's auto-response says "up to 48 hours" — first-time submissions usually clear in 24h if there are no flags.
+
+What's in this version (v0.1.0 / build 1):
+- Onboarding (3 pages)
+- Dashboard with module cards
+- Large Videos module (fully working: scan → review → Review Basket → delete via Recently Deleted)
+- Screenshots module placeholder ("coming soon")
+- Settings with privacy promise
+- App Privacy nutrition label: **Data Not Collected**
+- Age rating: **4+**
+- Price: Free in all 175 countries
+
+Apple Connect IDs (for future reference):
+- App ID: `6773746241`
+- AppStoreVersion ID: `0cd3d00f-a0f9-4e50-8591-0a7015a5ef6c`
+- Build ID: `8b2f8469-aaba-4a74-9353-0e381c280229`
+- Bundle ID internal: `84M8PH643H`
+- Profile ID: `6B8SAPTJW9` (Bide App Store)
+
+Notable shortcuts vs. the BlueBook bootstrap plan:
+- xcodebuild + altool driven entirely via App Store Connect API key (no Xcode sign-in needed)
+- Provisioning profile created via API rather than Xcode auto-fetch
+- Screenshot uploaded via 3-step App Store Connect API (no drag-drop)
+
+---
+
 ## 2026-05-27 — Atlassian deactivated; pivot to GitHub Issues + docs/ markdown
 
 **Decision:** Defer Jira/Confluence integration indefinitely. Use GitHub Issues for issue tracking and `docs/` markdown for project documentation.

@@ -4,6 +4,23 @@
 
 ---
 
+## 2026-05-27 — Atlassian deactivated; pivot to GitHub Issues + docs/ markdown
+
+**Decision:** Defer Jira/Confluence integration indefinitely. Use GitHub Issues for issue tracking and `docs/` markdown for project documentation.
+
+**Why:** The Atlassian workspace at `grifjef.atlassian.net` was discovered deactivated due to inactivity — Jira and Confluence both return 503 with a "Your Jira Cloud subscription has been deactivated, data will be permanently deleted soon" page. The Atlassian status page shows all systems operational globally, so this is workspace-specific, not a global outage.
+
+**State:**
+- An Atlassian API token named "Bide" was created and is saved at `.secrets/atlassian.env` (gitignored, mode 600). It authenticates against id.atlassian.com (account-level) but cannot be used against grifjef.atlassian.net while the workspace is deactivated.
+- All references to Jira project BD and Confluence space BD in `PLAN.md`, `CLAUDE.md`, and skill docs remain as the **future-state architecture** — they describe what happens if/when Atlassian is reactivated.
+
+**How to apply:**
+- New issues / tasks → GitHub Issues on `grifjef/bide-ios`
+- New documentation → markdown file in `docs/`
+- If user reactivates Atlassian via the contact-us link, the API token + skill recipes in `.claude/skills/jira-flow/` and `.claude/skills/confluence-doc/` make spin-up a one-shot job
+
+---
+
 ## 2026-05-25 — Final name: **Bide**
 
 **Decision:** Project renamed from KeepKind → Bide.

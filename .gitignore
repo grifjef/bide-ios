@@ -89,3 +89,4 @@ sonar-report.xml
 
 # Claude Code local
 .claude/local/
+.secrets/

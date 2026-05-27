@@ -78,6 +78,65 @@ final class PhotoLibraryService {
         }.value
     }
 
+    /// Fetch photo candidates for similar-photo clustering. Returns lightweight value
+    /// types with the metadata needed for keeper-scoring. Sorted by date ascending so
+    /// that time-bucketing is deterministic.
+    func fetchPhotoCandidates(limit: Int = 1000) async -> [SimilarPhotoCandidate] {
+        await Task.detached(priority: .userInitiated) {
+            let options = PHFetchOptions()
+            options.predicate = NSPredicate(
+                format: "mediaType == %d",
+                PHAssetMediaType.image.rawValue
+            )
+            options.sortDescriptors = [
+                NSSortDescriptor(key: "creationDate", ascending: true)
+            ]
+            options.fetchLimit = limit
+
+            let fetched = PHAsset.fetchAssets(with: options)
+            var result: [SimilarPhotoCandidate] = []
+            result.reserveCapacity(fetched.count)
+
+            fetched.enumerateObjects { asset, _, _ in
+                guard let creationDate = asset.creationDate else { return }
+                let resources = PHAssetResource.assetResources(for: asset)
+                let size = resources.first.flatMap {
+                    ($0.value(forKey: "fileSize") as? NSNumber)?.int64Value
+                } ?? 0
+
+                let mediaSubtypes = asset.mediaSubtypes
+                let isLive = mediaSubtypes.contains(.photoLive)
+                // PHAsset doesn't expose hasBeenEdited directly; modificationDate
+                // strictly greater than creationDate is the standard heuristic.
+                let edited: Bool = {
+                    guard let mod = asset.modificationDate else { return false }
+                    return mod.timeIntervalSince(creationDate) > 1.0
+                }()
+
+                result.append(
+                    SimilarPhotoCandidate(
+                        localIdentifier: asset.localIdentifier,
+                        creationDate: creationDate,
+                        pixelWidth: asset.pixelWidth,
+                        pixelHeight: asset.pixelHeight,
+                        estimatedFileSize: size,
+                        isFavorite: asset.isFavorite,
+                        isHidden: asset.isHidden,
+                        isLivePhoto: isLive,
+                        hasBeenEdited: edited,
+                        // We deliberately skip the album-membership lookup here — it
+                        // requires a fetch per asset and the keeper-scoring pipeline
+                        // treats this as a soft preference. The scan service can
+                        // populate it for tight-cluster cases later.
+                        isInUserAlbum: false
+                    )
+                )
+            }
+
+            return result
+        }.value
+    }
+
     /// Fetch screenshot assets (most recent first).
     func fetchScreenshots(limit: Int = 1000) async -> [ScreenshotSummary] {
         await Task.detached(priority: .userInitiated) {

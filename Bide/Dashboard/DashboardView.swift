@@ -45,13 +45,19 @@ struct DashboardView: View {
                         .buttonStyle(.plain)
                         .disabled(!photoLibrary.hasReadAccess)
 
-                        ModuleCard(
-                            icon: "square.on.square.dashed",
-                            title: "Similar photos",
-                            subtitle: "Coming soon — careful clustering of near-duplicates.",
-                            disabled: true,
-                            badge: "Soon"
-                        )
+                        NavigationLink {
+                            SimilarPhotosView()
+                        } label: {
+                            ModuleCard(
+                                icon: "square.on.square.dashed",
+                                title: "Similar photos",
+                                subtitle: "Clusters of near-duplicates with a suggested keeper.",
+                                disabled: !photoLibrary.hasReadAccess,
+                                badge: "Beta"
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!photoLibrary.hasReadAccess)
 
                         ModuleCard(
                             icon: "scribble.variable",

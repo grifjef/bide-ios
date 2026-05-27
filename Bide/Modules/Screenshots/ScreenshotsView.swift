@@ -1,24 +1,285 @@
 import SwiftUI
 
-/// Placeholder — full screenshots module lands in Phase 1.5.
-/// Phase 1 ships Large Videos as the headline experience.
 struct ScreenshotsView: View {
+    @Environment(PhotoLibraryService.self) private var photoLibrary
+    @Environment(ReviewBasket.self) private var basket
+    @State private var viewModel: ScreenshotsViewModel?
+
     var body: some View {
+        Group {
+            if let viewModel {
+                content(for: viewModel)
+            } else {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .background(BideTheme.background)
+        .navigationTitle("Screenshots")
+        .navigationBarTitleDisplayMode(.large)
+        .task {
+            if viewModel == nil {
+                viewModel = ScreenshotsViewModel(photoLibrary: photoLibrary)
+            }
+            await viewModel?.loadIfNeeded()
+        }
+    }
+
+    @ViewBuilder
+    private func content(for viewModel: ScreenshotsViewModel) -> some View {
+        switch viewModel.loadState {
+        case .idle, .loading:
+            loadingState
+        case .failed(let message):
+            failureState(message)
+        case .loaded:
+            if viewModel.groups.isEmpty {
+                emptyState
+            } else {
+                screenshotList(viewModel)
+            }
+        }
+    }
+
+    // MARK: - States
+
+    private var loadingState: some View {
+        VStack(spacing: BideTheme.m) {
+            ProgressView()
+                .controlSize(.large)
+            Text("Looking through your screenshots…")
+                .font(BideTheme.body())
+                .foregroundStyle(BideTheme.textSecondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func failureState(_ message: String) -> some View {
+        VStack(spacing: BideTheme.m) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.largeTitle)
+                .foregroundStyle(BideTheme.warning)
+            Text("Couldn't load screenshots")
+                .font(BideTheme.cardTitle())
+            Text(message)
+                .font(BideTheme.body())
+                .foregroundStyle(BideTheme.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(BideTheme.l)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var emptyState: some View {
         VStack(spacing: BideTheme.m) {
             Image(systemName: "doc.on.doc")
                 .font(.system(size: 56, weight: .light))
                 .foregroundStyle(BideTheme.textTertiary)
-            Text("Screenshots — coming next")
+            Text("No screenshots found")
                 .font(BideTheme.cardTitle())
-            Text("Bide is shipping Large Videos first. Screenshots and Similar Photos land in the next updates.")
+            Text("Your library has no screenshots right now, or they're stored in iCloud and not downloaded.")
                 .font(BideTheme.body())
                 .foregroundStyle(BideTheme.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, BideTheme.xl)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: - Main list
+
+    private func screenshotList(_ viewModel: ScreenshotsViewModel) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: BideTheme.m) {
+                summaryHeader(viewModel)
+                LazyVStack(alignment: .leading, spacing: BideTheme.l, pinnedViews: [.sectionHeaders]) {
+                    ForEach(viewModel.groups) { group in
+                        Section {
+                            grid(for: group, viewModel: viewModel)
+                        } header: {
+                            sectionHeader(for: group, viewModel: viewModel)
+                        }
+                    }
+                }
+            }
+            .padding(BideTheme.m)
+        }
+    }
+
+    private func summaryHeader(_ viewModel: ScreenshotsViewModel) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(viewModel.totalCount) screenshot\(viewModel.totalCount == 1 ? "" : "s")")
+                    .font(BideTheme.cardTitle())
+                if viewModel.protectedCount > 0 {
+                    Text("\(viewModel.protectedCount) protected (favorited or recent)")
+                        .font(BideTheme.caption())
+                        .foregroundStyle(BideTheme.textSecondary)
+                }
+            }
+            Spacer()
+            Text("Newest first")
+                .font(BideTheme.caption())
+                .foregroundStyle(BideTheme.textTertiary)
+        }
+    }
+
+    private func sectionHeader(for group: ScreenshotsViewModel.MonthGroup, viewModel: ScreenshotsViewModel) -> some View {
+        let selectable = viewModel.selectableItems(in: group)
+        let selectedInGroup = selectable.filter { basket.contains(localIdentifier: $0.localIdentifier) }
+        let allInBasket = !selectable.isEmpty && selectedInGroup.count == selectable.count
+
+        return HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(group.title)
+                    .font(BideTheme.cardTitle())
+                Text("\(group.items.count) screenshot\(group.items.count == 1 ? "" : "s")")
+                    .font(BideTheme.caption())
+                    .foregroundStyle(BideTheme.textSecondary)
+            }
+            Spacer()
+            if !selectable.isEmpty {
+                Button {
+                    toggleGroup(group, viewModel: viewModel, allInBasket: allInBasket)
+                } label: {
+                    Text(allInBasket ? "Deselect all" : "Select all")
+                        .font(BideTheme.caption().weight(.semibold))
+                }
+                .buttonStyle(.bordered)
+                .tint(BideTheme.accent)
+                .controlSize(.small)
+            }
+        }
+        .padding(.vertical, BideTheme.s)
+        .padding(.horizontal, BideTheme.xs)
         .background(BideTheme.background)
-        .navigationTitle("Screenshots")
-        .navigationBarTitleDisplayMode(.large)
+    }
+
+    private func grid(for group: ScreenshotsViewModel.MonthGroup, viewModel: ScreenshotsViewModel) -> some View {
+        let columns = [
+            GridItem(.flexible(), spacing: BideTheme.s),
+            GridItem(.flexible(), spacing: BideTheme.s),
+            GridItem(.flexible(), spacing: BideTheme.s)
+        ]
+        return LazyVGrid(columns: columns, spacing: BideTheme.s) {
+            ForEach(group.items) { item in
+                ScreenshotTile(
+                    item: item,
+                    protection: viewModel.protectionReason(item),
+                    isSelected: basket.contains(localIdentifier: item.localIdentifier)
+                ) {
+                    toggle(item, viewModel: viewModel)
+                }
+            }
+        }
+    }
+
+    // MARK: - Actions
+
+    private func toggle(_ item: ScreenshotSummary, viewModel: ScreenshotsViewModel) {
+        guard !viewModel.isProtected(item) else { return }
+        basket.toggle(
+            ReviewBasket.Item(
+                localIdentifier: item.localIdentifier,
+                source: .screenshots,
+                estimatedBytes: estimatedScreenshotBytes(item),
+                displayDate: item.formattedDate
+            )
+        )
+    }
+
+    private func toggleGroup(
+        _ group: ScreenshotsViewModel.MonthGroup,
+        viewModel: ScreenshotsViewModel,
+        allInBasket: Bool
+    ) {
+        for item in viewModel.selectableItems(in: group) {
+            if allInBasket {
+                basket.remove(localIdentifier: item.localIdentifier)
+            } else if !basket.contains(localIdentifier: item.localIdentifier) {
+                basket.add(
+                    ReviewBasket.Item(
+                        localIdentifier: item.localIdentifier,
+                        source: .screenshots,
+                        estimatedBytes: estimatedScreenshotBytes(item),
+                        displayDate: item.formattedDate
+                    )
+                )
+            }
+        }
+    }
+
+    /// Estimate screenshot byte size from pixel dimensions. PHAssetResource.fileSize
+    /// is expensive per-asset; estimating is fine for the basket total preview.
+    /// Real bytes are computed at deletion time by iOS itself.
+    private func estimatedScreenshotBytes(_ item: ScreenshotSummary) -> Int64 {
+        // Heuristic: ~0.15 bytes per pixel for HEIC screenshots, ~0.3 for PNG.
+        // We assume HEIC (iOS default since iOS 11) — slightly under-estimate is safer.
+        let pixels = Int64(item.pixelWidth) * Int64(item.pixelHeight)
+        return Int64(Double(pixels) * 0.15)
+    }
+}
+
+// MARK: - ScreenshotTile
+
+private struct ScreenshotTile: View {
+    let item: ScreenshotSummary
+    let protection: ScreenshotsViewModel.ProtectionReason?
+    let isSelected: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            ZStack(alignment: .topTrailing) {
+                ThumbnailView(localIdentifier: item.localIdentifier)
+                    .aspectRatio(9/19.5, contentMode: .fit)
+                    .clipShape(RoundedRectangle(cornerRadius: BideTheme.cornerSmall, style: .continuous))
+                    .overlay {
+                        if isSelected {
+                            RoundedRectangle(cornerRadius: BideTheme.cornerSmall, style: .continuous)
+                                .strokeBorder(BideTheme.accent, lineWidth: 3)
+                        }
+                        if protection != nil {
+                            RoundedRectangle(cornerRadius: BideTheme.cornerSmall, style: .continuous)
+                                .fill(BideTheme.background.opacity(0.5))
+                        }
+                    }
+
+                // Selection indicator
+                if protection == nil {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.title3)
+                        .foregroundStyle(isSelected ? BideTheme.accent : .white.opacity(0.9))
+                        .background(Circle().fill(isSelected ? .white : .black.opacity(0.35)).scaleEffect(0.85))
+                        .padding(BideTheme.xs)
+                }
+
+                // Protection badge
+                if let protection {
+                    HStack(spacing: 2) {
+                        Image(systemName: protection.iconName)
+                        Text(protection.displayName)
+                    }
+                    .font(.caption2.weight(.semibold))
+                    .padding(.horizontal, BideTheme.s)
+                    .padding(.vertical, 2)
+                    .foregroundStyle(BideTheme.warning)
+                    .background(.thinMaterial, in: Capsule())
+                    .padding(BideTheme.xs)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled(protection != nil)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private var accessibilityLabel: String {
+        let base = "Screenshot from \(item.formattedDate)"
+        if let protection {
+            return "\(base). Protected: \(protection.displayName.lowercased())."
+        }
+        return base
     }
 }

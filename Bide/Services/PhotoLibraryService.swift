@@ -15,6 +15,17 @@ final class PhotoLibraryService {
         self.authStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
     }
 
+    /// Re-read the PhotoKit authorization status. Call this when the app returns
+    /// to the foreground — the user may have granted permission in Settings
+    /// while we were backgrounded, and we want the dashboard to reflect that
+    /// immediately rather than after an app restart.
+    func refreshAuthStatus() {
+        let current = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        if current != authStatus {
+            authStatus = current
+        }
+    }
+
     // MARK: - Authorization
 
     @discardableResult

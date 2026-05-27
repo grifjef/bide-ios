@@ -41,8 +41,17 @@ final class IndexedAsset {
     /// 0 = low, 1 = medium, 2 = high. Conservative-default categorization.
     var riskLevelRaw: Int
 
-    /// Cluster grouping (similar photos). Nil if uncluster ed.
+    /// Cluster grouping (similar photos). Nil if unclustered.
     var clusterIdentifier: UUID?
+
+    /// Serialized `VNFeaturePrintObservation` (via NSSecureCoding).
+    /// Coupled with `featurePrintVersion` — if Apple updates the model in a
+    /// future iOS, the stored print is stale and we re-cluster.
+    var featurePrintData: Data?
+
+    /// Vision's `VNGenerateImageFeaturePrintRequest.currentRevision` at the
+    /// time the print was computed. Nil if no print is stored.
+    var featurePrintVersion: Int?
 
     init(
         localIdentifier: String,
@@ -60,7 +69,9 @@ final class IndexedAsset {
         sourceType: Int = 0,
         lastAnalyzedAt: Date? = nil,
         riskLevelRaw: Int = 0,
-        clusterIdentifier: UUID? = nil
+        clusterIdentifier: UUID? = nil,
+        featurePrintData: Data? = nil,
+        featurePrintVersion: Int? = nil
     ) {
         self.localIdentifier = localIdentifier
         self.creationDate = creationDate
@@ -78,6 +89,8 @@ final class IndexedAsset {
         self.lastAnalyzedAt = lastAnalyzedAt
         self.riskLevelRaw = riskLevelRaw
         self.clusterIdentifier = clusterIdentifier
+        self.featurePrintData = featurePrintData
+        self.featurePrintVersion = featurePrintVersion
     }
 }
 

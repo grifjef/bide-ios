@@ -1,8 +1,10 @@
 import SwiftUI
+import SwiftData
 
 struct SimilarPhotosView: View {
     @Environment(PhotoLibraryService.self) private var photoLibrary
     @Environment(ReviewBasket.self) private var basket
+    @Environment(\.modelContext) private var modelContext
     @State private var scanService: SimilarPhotosScanService?
 
     var body: some View {
@@ -19,7 +21,11 @@ struct SimilarPhotosView: View {
         .navigationBarTitleDisplayMode(.large)
         .task {
             if scanService == nil {
-                scanService = SimilarPhotosScanService(photoLibrary: photoLibrary)
+                let store = IndexedAssetStore(modelContext: modelContext)
+                scanService = SimilarPhotosScanService(
+                    photoLibrary: photoLibrary,
+                    indexedAssetStore: store
+                )
             }
             scanService?.startScanIfNeeded()
         }
@@ -152,6 +158,11 @@ struct SimilarPhotosView: View {
                 Text("Scanned \(scan.totalAssetsConsidered) photo\(scan.totalAssetsConsidered == 1 ? "" : "s")")
                     .font(BideTheme.caption())
                     .foregroundStyle(BideTheme.textSecondary)
+                if scan.featurePrintsReused > 0 || scan.featurePrintsComputed > 0 {
+                    Text(cacheStats(scan))
+                        .font(BideTheme.caption())
+                        .foregroundStyle(BideTheme.textTertiary)
+                }
             }
             Spacer()
             Button("Scan again") { scan.startScan() }
@@ -160,6 +171,14 @@ struct SimilarPhotosView: View {
                 .tint(BideTheme.accent)
                 .controlSize(.small)
         }
+    }
+
+    private func cacheStats(_ scan: SimilarPhotosScanService) -> String {
+        let parts: [String] = [
+            scan.featurePrintsReused > 0 ? "\(scan.featurePrintsReused) reused" : nil,
+            scan.featurePrintsComputed > 0 ? "\(scan.featurePrintsComputed) newly analyzed" : nil
+        ].compactMap { $0 }
+        return parts.joined(separator: " · ")
     }
 }
 

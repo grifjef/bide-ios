@@ -31,9 +31,17 @@ final class SimilarPhotosScanService {
     private(set) var totalAssetsConsidered: Int = 0
     private(set) var bucketsConsidered: Int = 0
     private(set) var featurePrintsComputed: Int = 0
+    private(set) var featurePrintsReused: Int = 0
+    private(set) var indexedEntriesReconciled: Int = 0
 
     private let photoLibrary: PhotoLibraryService
     private let vision = VisionService()
+
+    /// Optional persistent index. When provided, scans reuse feature prints
+    /// whose stored revision matches Vision's current revision instead of
+    /// recomputing. Production code passes the app's `IndexedAssetStore`;
+    /// tests can pass nil to fall back to the v0.2 behavior.
+    private let indexedAssetStore: IndexedAssetStore?
 
     /// Lower this to make scans faster on first launch; raise it for completeness.
     /// In v0.2 we cap at 500 to keep first-scan latency low; v0.3 will store the
@@ -51,9 +59,14 @@ final class SimilarPhotosScanService {
     /// the user is reviewing.
     private var libraryObserver: PhotoLibraryObserver?
 
-    init(photoLibrary: PhotoLibraryService, scanLimit: Int = 500) {
+    init(
+        photoLibrary: PhotoLibraryService,
+        scanLimit: Int = 500,
+        indexedAssetStore: IndexedAssetStore? = nil
+    ) {
         self.photoLibrary = photoLibrary
         self.scanLimit = scanLimit
+        self.indexedAssetStore = indexedAssetStore
         // Register an observer that drops cached clusters when the underlying
         // assets change. We don't auto-rescan — we just mark the results stale.
         Task { @MainActor in
@@ -125,6 +138,8 @@ final class SimilarPhotosScanService {
         totalAssetsConsidered = 0
         bucketsConsidered = 0
         featurePrintsComputed = 0
+        featurePrintsReused = 0
+        indexedEntriesReconciled = 0
         state = .scanning(progress: 0, label: "Looking through your photos…")
 
         currentTask = Task { [photoLibrary, vision, scanLimit, thumbnailSize] in
@@ -162,7 +177,15 @@ final class SimilarPhotosScanService {
             return
         }
 
-        // 2. Time-bucket the candidates
+        // 2. Reconcile the persistent index against present identifiers — drop
+        //    any indexed entries whose underlying PhotoKit asset no longer exists.
+        //    Cheap (only deletes), and keeps the cache from growing unbounded.
+        if let store = indexedAssetStore {
+            let present = Set(candidates.map(\.localIdentifier))
+            indexedEntriesReconciled = (try? store.reconcile(against: present)) ?? 0
+        }
+
+        // 3. Time-bucket the candidates
         let buckets = SimilarityClusterer.timeBuckets(
             candidates,
             date: { $0.creationDate },
@@ -179,8 +202,10 @@ final class SimilarPhotosScanService {
 
         let totalToProcess = multiBuckets.reduce(0) { $0 + $1.count }
         var processed = 0
+        let currentVisionRevision = VisionService.currentRevision
 
-        // 3. For each multi-bucket, fetch thumbnails + feature prints, then cluster
+        // 4. For each multi-bucket, build (candidate, featurePrint) pairs —
+        //    reusing stored prints where possible, computing + persisting new ones.
         var allClusters: [PhotoCluster] = []
         for bucket in multiBuckets {
             if Task.isCancelled { state = .cancelled; return }
@@ -189,9 +214,27 @@ final class SimilarPhotosScanService {
             for candidate in bucket {
                 if Task.isCancelled { state = .cancelled; return }
                 processed += 1
+
+                // 4a. Try the index first. If we have a print at the current
+                //     Vision revision, skip all the expensive work.
+                if let store = indexedAssetStore,
+                   let stored = try? store.storedFeaturePrint(
+                       for: candidate.localIdentifier,
+                       requiredVersion: currentVisionRevision
+                   ) {
+                    bucketPairs.append((candidate, stored))
+                    featurePrintsReused += 1
+                    state = .scanning(
+                        progress: Double(processed) / Double(totalToProcess),
+                        label: "Comparing photos from \(formatted(candidate.creationDate))…"
+                    )
+                    continue
+                }
+
+                // 4b. Miss — fetch a thumbnail, compute a print, persist it.
                 state = .scanning(
                     progress: Double(processed) / Double(totalToProcess),
-                    label: "Comparing photos from \(formatted(candidate.creationDate))…"
+                    label: "Analyzing new photos from \(formatted(candidate.creationDate))…"
                 )
 
                 guard let image = await photoLibrary.requestThumbnail(
@@ -204,12 +247,21 @@ final class SimilarPhotosScanService {
                 guard let fp = await vision.featurePrint(for: image) else { continue }
                 bucketPairs.append((candidate, fp))
                 featurePrintsComputed += 1
+
+                // Best-effort persist. Don't fail the scan on a store error.
+                if let store = indexedAssetStore {
+                    _ = try? store.upsertFeaturePrint(
+                        for: candidate,
+                        featurePrint: fp,
+                        version: currentVisionRevision
+                    )
+                }
             }
 
             guard bucketPairs.count >= 2 else { continue }
 
-            // 4. Cluster within this bucket. We bypass the public time-bucketing
-            // (we already bucketed) and go straight to distance clustering.
+            // 5. Cluster within this bucket. We bypass the public time-bucketing
+            //    (we already bucketed) and go straight to distance clustering.
             let groups = SimilarityClusterer.clusterByDistance(
                 bucketPairs,
                 distance: { a, b in vision.distance(from: a.featurePrint, to: b.featurePrint) },

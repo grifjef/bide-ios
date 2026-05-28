@@ -382,6 +382,73 @@ final class PhotoLibraryService {
         }.value
     }
 
+    /// Fetch Live Photos sorted by file size descending. Live Photos carry a
+    /// video sidecar that typically adds ~40% to file size — meaningful when
+    /// reviewing for storage reclaim.
+    ///
+    /// Uses the two-pass estimate-then-real-bytes strategy that
+    /// `fetchLargeVideos` uses, since Live Photos can also be large and
+    /// per-asset fileSize calls are expensive on big libraries.
+    func fetchLivePhotos(limit: Int = 200) async -> [LivePhotoSummary] {
+        await Task.detached(priority: .userInitiated) {
+            let options = PHFetchOptions()
+            options.predicate = NSPredicate(
+                format: "mediaType == %d AND (mediaSubtypes & %d) != 0",
+                PHAssetMediaType.image.rawValue,
+                PHAssetMediaSubtype.photoLive.rawValue
+            )
+            options.sortDescriptors = [
+                NSSortDescriptor(key: "creationDate", ascending: false)
+            ]
+
+            let fetched = PHAsset.fetchAssets(with: options)
+
+            // Pass 1: cheap enumeration with estimate. Live Photo bytes
+            // estimator is roughly the still HEIC + a short H.264 video.
+            struct PreliminaryRow {
+                let asset: PHAsset
+                let estimate: Int64
+            }
+            var prelim: [PreliminaryRow] = []
+            prelim.reserveCapacity(fetched.count)
+            fetched.enumerateObjects { asset, _, _ in
+                let stillEstimate = Self.estimatedScreenshotBytes(
+                    pixelWidth: asset.pixelWidth,
+                    pixelHeight: asset.pixelHeight
+                )
+                // Live Photo video portion: ~1.5 seconds at modest H.264 ≈ 2 MB
+                let videoEstimate: Int64 = 2_000_000
+                prelim.append(PreliminaryRow(asset: asset, estimate: stillEstimate + videoEstimate))
+            }
+
+            let topCandidates = prelim
+                .sorted { $0.estimate > $1.estimate }
+                .prefix(limit)
+
+            var summaries: [LivePhotoSummary] = []
+            summaries.reserveCapacity(topCandidates.count)
+            for row in topCandidates {
+                let asset = row.asset
+                let realSize = Self.fileSize(of: asset)
+                let bytes = realSize > 0 ? realSize : row.estimate
+
+                summaries.append(
+                    LivePhotoSummary(
+                        localIdentifier: asset.localIdentifier,
+                        creationDate: asset.creationDate,
+                        pixelWidth: asset.pixelWidth,
+                        pixelHeight: asset.pixelHeight,
+                        fileSize: bytes,
+                        isFavorite: asset.isFavorite,
+                        isHidden: asset.isHidden
+                    )
+                )
+            }
+
+            return summaries.sorted { $0.fileSize > $1.fileSize }
+        }.value
+    }
+
     /// Fetch screenshot assets (most recent first).
     func fetchScreenshots(limit: Int = 1000) async -> [ScreenshotSummary] {
         await Task.detached(priority: .userInitiated) {

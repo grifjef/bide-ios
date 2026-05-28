@@ -47,6 +47,35 @@ struct LargeVideoSummary: Identifiable, Hashable, Sendable {
     }
 }
 
+/// Lightweight value type for Live Photo review.
+struct LivePhotoSummary: Identifiable, Hashable, Sendable {
+    let localIdentifier: String
+    let creationDate: Date?
+    let pixelWidth: Int
+    let pixelHeight: Int
+    let fileSize: Int64
+    let isFavorite: Bool
+    let isHidden: Bool
+
+    var id: String { localIdentifier }
+
+    var formattedSize: String {
+        ByteCountFormatter.string(fromByteCount: fileSize, countStyle: .file)
+    }
+
+    var formattedDate: String {
+        guard let date = creationDate else { return "" }
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
+    }
+
+    var isProtected: Bool {
+        isFavorite || isHidden
+    }
+}
+
 struct ScreenshotSummary: Identifiable, Hashable, Sendable {
     let localIdentifier: String
     let creationDate: Date?

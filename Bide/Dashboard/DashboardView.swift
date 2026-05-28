@@ -77,6 +77,20 @@ struct DashboardView: View {
                         .disabled(!photoLibrary.hasReadAccess)
 
                         NavigationLink {
+                            LivePhotosView()
+                        } label: {
+                            ModuleCard(
+                                icon: "livephoto",
+                                title: "Live Photos",
+                                subtitle: livePhotosSubtitle,
+                                disabled: !photoLibrary.hasReadAccess,
+                                badge: "Beta"
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!photoLibrary.hasReadAccess)
+
+                        NavigationLink {
                             SimilarPhotosView()
                         } label: {
                             ModuleCard(
@@ -185,6 +199,16 @@ struct DashboardView: View {
             return "\(s.count) screenshot\(s.count == 1 ? "" : "s") · ~\(s.formattedTotal)"
         }
         return "Group and review old screenshots."
+    }
+
+    private var livePhotosSubtitle: String {
+        if let s = summary.livePhotos {
+            if s.count == 0 {
+                return "No Live Photos found."
+            }
+            return "\(s.count) Live Photo\(s.count == 1 ? "" : "s") · \(s.formattedTotal)"
+        }
+        return "Stills with a short video sidecar."
     }
 
     private var permissionBanner: some View {

@@ -47,10 +47,19 @@ final class DashboardSummary {
         }
     }
 
+    struct LivePhotosCount: Equatable {
+        let count: Int
+        let totalBytes: Int64
+        var formattedTotal: String {
+            ByteCountFormatter.string(fromByteCount: totalBytes, countStyle: .file)
+        }
+    }
+
     private(set) var largeVideos: LargeVideosCount?
     private(set) var screenRecordings: ScreenRecordingsCount?
     private(set) var screenshots: ScreenshotsCount?
     private(set) var duplicates: DuplicatesCount?
+    private(set) var livePhotos: LivePhotosCount?
     private(set) var isRefreshing: Bool = false
     private(set) var lastRefreshAt: Date?
 
@@ -76,6 +85,7 @@ final class DashboardSummary {
                 group.addTask { await self.refreshScreenRecordings(photoLibrary: photoLibrary) }
                 group.addTask { await self.refreshScreenshots(photoLibrary: photoLibrary) }
                 group.addTask { await self.refreshDuplicates(photoLibrary: photoLibrary) }
+                group.addTask { await self.refreshLivePhotos(photoLibrary: photoLibrary) }
             }
             self.isRefreshing = false
             self.lastRefreshAt = Date()
@@ -114,6 +124,12 @@ final class DashboardSummary {
             )
         }
         screenshots = ScreenshotsCount(count: shots.count, estimatedBytes: estimated)
+    }
+
+    private func refreshLivePhotos(photoLibrary: PhotoLibraryService) async {
+        let photos = await photoLibrary.fetchLivePhotos(limit: 200)
+        let total = photos.reduce(Int64(0)) { $0 + $1.fileSize }
+        livePhotos = LivePhotosCount(count: photos.count, totalBytes: total)
     }
 
     private func refreshDuplicates(photoLibrary: PhotoLibraryService) async {

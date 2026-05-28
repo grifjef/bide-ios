@@ -20,6 +20,17 @@ struct DashboardView: View {
                         LimitedLibraryBanner()
                     }
 
+                    // On This Day callout — only shown when there are
+                    // photos from this day in past years
+                    if let s = summary.onThisDay, s.totalCount > 0 {
+                        NavigationLink {
+                            OnThisDayView()
+                        } label: {
+                            onThisDayCard(s)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
                     // Module cards
                     VStack(spacing: BideTheme.m) {
                         NavigationLink {
@@ -199,6 +210,36 @@ struct DashboardView: View {
             return "\(s.count) screenshot\(s.count == 1 ? "" : "s") · ~\(s.formattedTotal)"
         }
         return "Group and review old screenshots."
+    }
+
+    private func onThisDayCard(_ s: DashboardSummary.OnThisDayCount) -> some View {
+        let yearsAgoLabel = s.yearsAgo == 1 ? "1 year ago" : "\(s.yearsAgo) years ago"
+        return VStack(alignment: .leading, spacing: BideTheme.s) {
+            HStack(spacing: BideTheme.s) {
+                Image(systemName: "calendar.badge.clock")
+                    .font(.title2)
+                    .foregroundStyle(BideTheme.accent)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("On this day")
+                        .font(BideTheme.cardTitle())
+                    Text("\(s.totalCount) photo\(s.totalCount == 1 ? "" : "s"), starting \(yearsAgoLabel)")
+                        .font(BideTheme.caption())
+                        .foregroundStyle(BideTheme.textSecondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.callout.weight(.semibold))
+                    .foregroundStyle(BideTheme.textTertiary)
+            }
+            Text("A calm five-minute look back at the same calendar day from past years. No pressure to delete — just review.")
+                .font(BideTheme.caption())
+                .foregroundStyle(BideTheme.textTertiary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .bideCard()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("On this day. \(s.totalCount) photos from past years on this calendar day.")
+        .accessibilityHint("Double-tap to review photos from past years")
     }
 
     private var livePhotosSubtitle: String {

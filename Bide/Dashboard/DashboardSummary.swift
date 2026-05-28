@@ -55,11 +55,17 @@ final class DashboardSummary {
         }
     }
 
+    struct OnThisDayCount: Equatable {
+        let totalCount: Int
+        let yearsAgo: Int  // newest year-group's "N years ago" — for the headline
+    }
+
     private(set) var largeVideos: LargeVideosCount?
     private(set) var screenRecordings: ScreenRecordingsCount?
     private(set) var screenshots: ScreenshotsCount?
     private(set) var duplicates: DuplicatesCount?
     private(set) var livePhotos: LivePhotosCount?
+    private(set) var onThisDay: OnThisDayCount?
     private(set) var isRefreshing: Bool = false
     private(set) var lastRefreshAt: Date?
 
@@ -86,6 +92,7 @@ final class DashboardSummary {
                 group.addTask { await self.refreshScreenshots(photoLibrary: photoLibrary) }
                 group.addTask { await self.refreshDuplicates(photoLibrary: photoLibrary) }
                 group.addTask { await self.refreshLivePhotos(photoLibrary: photoLibrary) }
+                group.addTask { await self.refreshOnThisDay(photoLibrary: photoLibrary) }
             }
             self.isRefreshing = false
             self.lastRefreshAt = Date()
@@ -130,6 +137,21 @@ final class DashboardSummary {
         let photos = await photoLibrary.fetchLivePhotos(limit: 200)
         let total = photos.reduce(Int64(0)) { $0 + $1.fileSize }
         livePhotos = LivePhotosCount(count: photos.count, totalBytes: total)
+    }
+
+    private func refreshOnThisDay(photoLibrary: PhotoLibraryService) async {
+        let candidates = await photoLibrary.fetchPhotoCandidates(limit: 5_000)
+        let groups = OnThisDayMatcher.groupsForToday(
+            candidates: candidates,
+            targetDate: Date()
+        )
+        let calendar = Calendar.current
+        let targetYear = calendar.component(.year, from: Date())
+        let yearsAgo = groups.first.map { targetYear - $0.id } ?? 0
+        onThisDay = OnThisDayCount(
+            totalCount: OnThisDayMatcher.totalCount(groups),
+            yearsAgo: yearsAgo
+        )
     }
 
     private func refreshDuplicates(photoLibrary: PhotoLibraryService) async {

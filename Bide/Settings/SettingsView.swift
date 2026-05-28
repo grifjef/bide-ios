@@ -71,6 +71,19 @@ struct SettingsView: View {
 
                 Section {
                     NavigationLink {
+                        HowBideWorksView()
+                    } label: {
+                        Label("How Bide works", systemImage: "book")
+                    }
+                } header: {
+                    Text("Help")
+                } footer: {
+                    Text("A short guide to the modules, what's protected, and how recovery works. Useful before granting access, useful any time after.")
+                        .font(BideTheme.caption())
+                }
+
+                Section {
+                    NavigationLink {
                         DiagnosticsView()
                     } label: {
                         Label("Diagnostics", systemImage: "waveform.path.ecg")

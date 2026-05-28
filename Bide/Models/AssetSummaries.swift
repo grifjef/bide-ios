@@ -54,6 +54,11 @@ struct LivePhotoSummary: Identifiable, Hashable, Sendable {
     let pixelWidth: Int
     let pixelHeight: Int
     let fileSize: Int64
+    /// Bytes attributable to the paired-video sidecar specifically. Used to
+    /// show users how much they would reclaim by converting to a still, since
+    /// that's the portion that disappears. Zero when unavailable (e.g.
+    /// resource size lookup failed); UI should hide the line in that case.
+    let pairedVideoSize: Int64
     let isFavorite: Bool
     let isHidden: Bool
 
@@ -69,6 +74,19 @@ struct LivePhotoSummary: Identifiable, Hashable, Sendable {
         formatter.dateStyle = .medium
         formatter.timeStyle = .none
         return formatter.string(from: date)
+    }
+
+    /// Best-available estimate of bytes reclaimed if the Live Photo were
+    /// converted to a still. Falls back to ~40% of the total file size when
+    /// the per-resource lookup didn't return a value (the rule-of-thumb that
+    /// underlies the module's framing copy).
+    var estimatedVideoSidecarBytes: Int64 {
+        if pairedVideoSize > 0 { return pairedVideoSize }
+        return Int64(Double(fileSize) * 0.4)
+    }
+
+    var formattedPairedVideoSize: String {
+        ByteCountFormatter.string(fromByteCount: estimatedVideoSidecarBytes, countStyle: .file)
     }
 
     var isProtected: Bool {

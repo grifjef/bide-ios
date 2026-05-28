@@ -429,8 +429,14 @@ final class PhotoLibraryService {
             summaries.reserveCapacity(topCandidates.count)
             for row in topCandidates {
                 let asset = row.asset
-                let realSize = Self.fileSize(of: asset)
-                let bytes = realSize > 0 ? realSize : row.estimate
+                let resources = PHAssetResource.assetResources(for: asset)
+                let totalReal = resources.reduce(Int64(0)) { acc, resource in
+                    acc + ((resource.value(forKey: "fileSize") as? NSNumber)?.int64Value ?? 0)
+                }
+                let pairedVideoReal = resources
+                    .first(where: { $0.type == .pairedVideo })
+                    .flatMap { ($0.value(forKey: "fileSize") as? NSNumber)?.int64Value } ?? 0
+                let bytes = totalReal > 0 ? totalReal : row.estimate
 
                 summaries.append(
                     LivePhotoSummary(
@@ -439,6 +445,7 @@ final class PhotoLibraryService {
                         pixelWidth: asset.pixelWidth,
                         pixelHeight: asset.pixelHeight,
                         fileSize: bytes,
+                        pairedVideoSize: pairedVideoReal,
                         isFavorite: asset.isFavorite,
                         isHidden: asset.isHidden
                     )
@@ -599,6 +606,134 @@ final class PhotoLibraryService {
         }
     }
 
+    // MARK: - Live Photo conversion
+
+    struct LivePhotoConversionResult: Sendable {
+        let bytesReclaimedEstimate: Int64
+        let newAssetIdentifier: String?
+    }
+
+    enum LivePhotoConversionError: LocalizedError {
+        case sourceNotFound
+        case stillResourceMissing
+        case stillResourceCopyFailed(underlying: String)
+        case writeFailed(underlying: String)
+        case originalDeletionFailed(underlying: String)
+
+        var errorDescription: String? {
+            switch self {
+            case .sourceNotFound:
+                return "The Live Photo couldn't be found in your library."
+            case .stillResourceMissing:
+                return "The still image inside this Live Photo isn't available."
+            case .stillResourceCopyFailed(let message):
+                return "Couldn't copy the still image: \(message)"
+            case .writeFailed(let message):
+                return "Couldn't save the new still photo: \(message)"
+            case .originalDeletionFailed(let message):
+                return "Saved the still, but couldn't remove the original Live Photo: \(message)"
+            }
+        }
+    }
+
+    /// Convert a Live Photo to a still by writing the original still resource
+    /// as a new asset and moving the source Live Photo to Recently Deleted.
+    ///
+    /// We copy the `.photo` resource bytes directly rather than re-encoding so
+    /// the saved still is byte-identical to the still that was already inside
+    /// the Live Photo. Creation date and location are preserved; the Live
+    /// Photo's favorite state is intentionally NOT carried over because the
+    /// caller has already excluded favorites at the row level.
+    ///
+    /// Triggers iOS's system confirmation sheet for the deletion step — the
+    /// user can still back out at that prompt. The new still asset has
+    /// already been written by then; if the user cancels deletion, they end
+    /// up with both the still and the Live Photo in their library.
+    func convertLivePhotoToStill(localIdentifier: String) async throws -> LivePhotoConversionResult {
+        guard let source = resolveAssets(for: [localIdentifier]).first else {
+            throw LivePhotoConversionError.sourceNotFound
+        }
+
+        let resources = PHAssetResource.assetResources(for: source)
+        guard let stillResource = resources.first(where: { $0.type == .photo }) else {
+            throw LivePhotoConversionError.stillResourceMissing
+        }
+
+        let pairedVideoBytes = resources
+            .first(where: { $0.type == .pairedVideo })
+            .flatMap { ($0.value(forKey: "fileSize") as? NSNumber)?.int64Value } ?? 0
+
+        let tmpURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("bide-still-\(UUID().uuidString).heic")
+
+        let resourceOptions = PHAssetResourceRequestOptions()
+        resourceOptions.isNetworkAccessAllowed = true
+
+        do {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                PHAssetResourceManager.default().writeData(
+                    for: stillResource,
+                    toFile: tmpURL,
+                    options: resourceOptions
+                ) { error in
+                    if let error {
+                        continuation.resume(
+                            throwing: LivePhotoConversionError.stillResourceCopyFailed(
+                                underlying: error.localizedDescription
+                            )
+                        )
+                    } else {
+                        continuation.resume(returning: ())
+                    }
+                }
+            }
+        } catch {
+            try? FileManager.default.removeItem(at: tmpURL)
+            throw error
+        }
+
+        let identifierHolder = LivePhotoConversionIdentifierHolder()
+        let creationDate = source.creationDate
+        let location = source.location
+        let originalFilename = stillResource.originalFilename
+
+        do {
+            try await PHPhotoLibrary.shared().performChanges {
+                let creation = PHAssetCreationRequest.forAsset()
+                creation.creationDate = creationDate
+                creation.location = location
+
+                let creationOptions = PHAssetResourceCreationOptions()
+                creationOptions.originalFilename = originalFilename
+                // shouldMoveFile is false — we delete our own tmp file in finally.
+                creationOptions.shouldMoveFile = false
+
+                creation.addResource(with: .photo, fileURL: tmpURL, options: creationOptions)
+                identifierHolder.identifier = creation.placeholderForCreatedAsset?.localIdentifier
+            }
+        } catch {
+            try? FileManager.default.removeItem(at: tmpURL)
+            throw LivePhotoConversionError.writeFailed(underlying: error.localizedDescription)
+        }
+
+        try? FileManager.default.removeItem(at: tmpURL)
+
+        do {
+            try await PHPhotoLibrary.shared().performChanges {
+                PHAssetChangeRequest.deleteAssets([source] as NSArray)
+            }
+        } catch {
+            throw LivePhotoConversionError.originalDeletionFailed(
+                underlying: error.localizedDescription
+            )
+        }
+
+        return LivePhotoConversionResult(
+            bytesReclaimedEstimate: pairedVideoBytes,
+            newAssetIdentifier: identifierHolder.identifier
+        )
+    }
+
     // MARK: - Private helpers
 
     private func resolveAssets(for identifiers: [String]) -> [PHAsset] {
@@ -621,4 +756,11 @@ final class PhotoLibraryService {
         }
         return 0
     }
+}
+
+/// Reference holder for capturing PhotoKit's placeholder-asset identifier
+/// from inside a `performChanges` closure (which can't easily return values).
+/// Lives at file scope so it's reachable across the actor boundary.
+final class LivePhotoConversionIdentifierHolder: @unchecked Sendable {
+    var identifier: String?
 }

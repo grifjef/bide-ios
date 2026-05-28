@@ -148,6 +148,27 @@ catch {
 
 Deleted assets land in Photos > Albums > Recently Deleted with the standard 30-day recovery window. Bide never reaches into Recently Deleted itself — emptying that album is Photos.app's job.
 
+### Live Photo → still conversion
+
+The Live Photos module offers a "Convert to still" action — keep the photo, drop the video sidecar. Implementation in `PhotoLibraryService.convertLivePhotoToStill(localIdentifier:)`:
+
+1. Find the `.photo` resource on the Live Photo's `PHAssetResource` list.
+2. `PHAssetResourceManager.default().writeData(for:toFile:options:)` into a temp file, with `isNetworkAccessAllowed = true` so iCloud-only Live Photos round-trip cleanly.
+3. Inside `performChanges`:
+   ```swift
+   let creation = PHAssetCreationRequest.forAsset()
+   creation.creationDate = source.creationDate
+   creation.location = source.location
+   let options = PHAssetResourceCreationOptions()
+   options.originalFilename = stillResource.originalFilename
+   creation.addResource(with: .photo, fileURL: tmpURL, options: options)
+   ```
+4. A *second* `performChanges` runs `deleteAssets([source])` to move the original Live Photo to Recently Deleted.
+
+We split into two `performChanges` calls (not one) so the user sees the system confirmation sheet for the deletion specifically — the "save still" step is silent because it's purely additive and reversible (they can remove the new still from Recently Deleted just like anything else).
+
+Bytes attributed to the conversion come from the paired-video resource's `fileSize`, surfaced via `LivePhotoSummary.pairedVideoSize`. When PhotoKit returns 0 (iCloud-not-downloaded), we fall back to a 40% estimate so the UI still shows an honest number.
+
 ---
 
 ## Library change observation

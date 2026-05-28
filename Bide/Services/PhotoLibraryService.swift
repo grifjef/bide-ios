@@ -210,7 +210,8 @@ final class PhotoLibraryService {
                         // requires a fetch per asset and the keeper-scoring pipeline
                         // treats this as a soft preference. The scan service can
                         // populate it for tight-cluster cases later.
-                        isInUserAlbum: false
+                        isInUserAlbum: false,
+                        burstIdentifier: asset.burstIdentifier
                     )
                 )
             }

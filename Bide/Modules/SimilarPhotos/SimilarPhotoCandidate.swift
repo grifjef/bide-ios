@@ -15,6 +15,12 @@ struct SimilarPhotoCandidate: Identifiable, Hashable, Sendable {
     let hasBeenEdited: Bool
     let isInUserAlbum: Bool
 
+    /// PHAsset.burstIdentifier — non-nil when this asset is part of a burst
+    /// sequence. Bursts are handled by direct grouping in the scan service
+    /// (much faster than Vision clustering) so we don't need to feature-print
+    /// them.
+    let burstIdentifier: String?
+
     var id: String { localIdentifier }
 
     var resolution: Int { pixelWidth * pixelHeight }

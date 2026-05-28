@@ -173,7 +173,8 @@ final class IndexedAssetStoreTests: XCTestCase {
             isHidden: isHidden,
             isLivePhoto: false,
             hasBeenEdited: false,
-            isInUserAlbum: false
+            isInUserAlbum: false,
+            burstIdentifier: nil
         )
     }
 

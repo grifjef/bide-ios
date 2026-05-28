@@ -201,6 +201,60 @@ final class SimilarityClustererTests: XCTestCase {
         XCTAssertTrue(reason.lowercased().contains("suggested keeper"), "got: \(reason)")
     }
 
+    // MARK: - Burst grouping
+
+    func test_burstGroups_groupsByBurstIdentifier() {
+        let a = cand(id: "a", date: at(hour: 12, minute: 0), burstId: "burst-1")
+        let b = cand(id: "b", date: at(hour: 12, minute: 0), burstId: "burst-1")
+        let c = cand(id: "c", date: at(hour: 13, minute: 0), burstId: "burst-2")
+        let d = cand(id: "d", date: at(hour: 14, minute: 0), burstId: nil)
+
+        let groups = SimilarityClusterer.burstGroups([a, b, c, d])
+        XCTAssertEqual(groups.count, 1, "burst-1 has 2 members; burst-2 only has 1; non-burst ignored")
+        XCTAssertEqual(Set(groups[0].map(\.id)), Set(["a", "b"]))
+    }
+
+    func test_burstGroups_ignoresSingletonBursts() {
+        let a = cand(id: "a", date: at(hour: 12, minute: 0), burstId: "burst-1")
+        let groups = SimilarityClusterer.burstGroups([a])
+        XCTAssertEqual(groups.count, 0)
+    }
+
+    func test_burstGroups_ignoresNilBurstIdentifier() {
+        let a = cand(id: "a", date: at(hour: 12, minute: 0), burstId: nil)
+        let b = cand(id: "b", date: at(hour: 12, minute: 0), burstId: nil)
+        let groups = SimilarityClusterer.burstGroups([a, b])
+        XCTAssertEqual(groups.count, 0)
+    }
+
+    func test_burstGroups_sortsMembersByDate() {
+        let early = cand(id: "early", date: at(hour: 12, minute: 0), burstId: "burst-1")
+        let mid = cand(id: "mid", date: at(hour: 12, minute: 1), burstId: "burst-1")
+        let late = cand(id: "late", date: at(hour: 12, minute: 2), burstId: "burst-1")
+
+        // Input order is shuffled
+        let groups = SimilarityClusterer.burstGroups([late, early, mid])
+        XCTAssertEqual(groups.count, 1)
+        XCTAssertEqual(groups[0].map(\.id), ["early", "mid", "late"])
+    }
+
+    func test_makeBurstCluster_buildsCluster() {
+        let a = cand(id: "a", date: at(hour: 12, minute: 0), burstId: "burst-1")
+        let b = cand(id: "b", date: at(hour: 12, minute: 0), pixelWidth: 4000, pixelHeight: 4000, burstId: "burst-1")
+        let cluster = SimilarityClusterer.makeBurstCluster([a, b])
+        XCTAssertEqual(cluster.candidates.count, 2)
+        XCTAssertEqual(cluster.suggestedKeeperId, "b") // higher resolution wins
+        XCTAssertTrue(cluster.suggestedKeeperReason.lowercased().contains("burst"))
+    }
+
+    func test_burstKeeperReason_favoriteWins() {
+        let plain = cand(id: "plain", date: at(hour: 12, minute: 0), burstId: "b")
+        let favorite = cand(id: "fav", date: at(hour: 12, minute: 0), isFavorite: true, burstId: "b")
+        let reason = SimilarityClusterer.burstKeeperReason([plain, favorite], keeperId: "fav")
+        XCTAssertTrue(reason.lowercased().contains("favorited"))
+        XCTAssertTrue(reason.lowercased().contains("burst"))
+    }
+
     // MARK: - Helpers
 
     private func cand(
@@ -213,7 +267,8 @@ final class SimilarityClustererTests: XCTestCase {
         isHidden: Bool = false,
         isLivePhoto: Bool = false,
         hasBeenEdited: Bool = false,
-        isInUserAlbum: Bool = false
+        isInUserAlbum: Bool = false,
+        burstId: String? = nil
     ) -> SimilarPhotoCandidate {
         SimilarPhotoCandidate(
             localIdentifier: id,
@@ -225,7 +280,8 @@ final class SimilarityClustererTests: XCTestCase {
             isHidden: isHidden,
             isLivePhoto: isLivePhoto,
             hasBeenEdited: hasBeenEdited,
-            isInUserAlbum: isInUserAlbum
+            isInUserAlbum: isInUserAlbum,
+            burstIdentifier: burstId
         )
     }
 

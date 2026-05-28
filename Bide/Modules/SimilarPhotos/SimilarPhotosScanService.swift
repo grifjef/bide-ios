@@ -33,6 +33,7 @@ final class SimilarPhotosScanService {
     private(set) var featurePrintsComputed: Int = 0
     private(set) var featurePrintsReused: Int = 0
     private(set) var indexedEntriesReconciled: Int = 0
+    private(set) var burstClustersFound: Int = 0
 
     private let photoLibrary: PhotoLibraryService
     private let vision = VisionService()
@@ -140,6 +141,7 @@ final class SimilarPhotosScanService {
         featurePrintsComputed = 0
         featurePrintsReused = 0
         indexedEntriesReconciled = 0
+        burstClustersFound = 0
         state = .scanning(progress: 0, label: "Looking through your photos…")
 
         currentTask = Task { [photoLibrary, vision, scanLimit, thumbnailSize] in
@@ -185,9 +187,29 @@ final class SimilarPhotosScanService {
             indexedEntriesReconciled = (try? store.reconcile(against: present)) ?? 0
         }
 
-        // 3. Time-bucket the candidates
+        // 3. Burst detection — these are confirmed clusters from PhotoKit itself.
+        //    Faster and more accurate than feature-print clustering for the
+        //    specific case of "user held shutter, got 10 near-identical shots".
+        //    We pull them out before time-bucketing so the Vision pipeline doesn't
+        //    redundantly re-cluster them.
+        let burstGroups = SimilarityClusterer.burstGroups(candidates)
+        var burstClusters: [PhotoCluster] = []
+        var burstMemberIds = Set<String>()
+        for burst in burstGroups {
+            burstClusters.append(SimilarityClusterer.makeBurstCluster(burst))
+            for member in burst {
+                burstMemberIds.insert(member.id)
+            }
+        }
+        burstClustersFound = burstClusters.count
+
+        // Remove burst-member candidates from the pool that goes through the
+        // Vision-based time-bucket pipeline.
+        let nonBurstCandidates = candidates.filter { !burstMemberIds.contains($0.id) }
+
+        // 4. Time-bucket the remaining (non-burst) candidates
         let buckets = SimilarityClusterer.timeBuckets(
-            candidates,
+            nonBurstCandidates,
             date: { $0.creationDate },
             window: SimilarityClusterer.defaultTimeWindowSeconds
         )
@@ -284,7 +306,10 @@ final class SimilarPhotosScanService {
             }
         }
 
-        clusters = allClusters.sorted { $0.representativeDate > $1.representativeDate }
+        // Combine burst clusters (no Vision needed) with Vision-derived clusters
+        // and sort by representativeDate descending (newest first).
+        let combined = burstClusters + allClusters
+        clusters = combined.sorted { $0.representativeDate > $1.representativeDate }
         state = .completed
         lastCompletedAt = Date()
     }

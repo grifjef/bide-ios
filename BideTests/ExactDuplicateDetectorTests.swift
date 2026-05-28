@@ -157,7 +157,8 @@ final class ExactDuplicateDetectorTests: XCTestCase {
             isHidden: hidden,
             isLivePhoto: false,
             hasBeenEdited: false,
-            isInUserAlbum: false
+            isInUserAlbum: false,
+            burstIdentifier: nil
         )
     }
 

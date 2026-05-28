@@ -22,6 +22,59 @@ enum SimilarityClusterer {
     static let defaultDistanceThreshold: Float = 12.0
     static let defaultTimeWindowSeconds: TimeInterval = 60 * 60 // 1 hour
 
+    // MARK: - Burst grouping (pure)
+
+    /// Group candidates by `burstIdentifier`. Returns only groups with ≥ 2
+    /// members. Candidates with nil burstIdentifier are ignored (they go
+    /// through the feature-print pipeline).
+    ///
+    /// Burst detection is exact (no thresholds, no Vision needed) — PhotoKit's
+    /// burst tag is set by the OS when the user holds the shutter.
+    static func burstGroups(_ candidates: [SimilarPhotoCandidate]) -> [[SimilarPhotoCandidate]] {
+        var bucket: [String: [SimilarPhotoCandidate]] = [:]
+        for candidate in candidates {
+            guard let burst = candidate.burstIdentifier else { continue }
+            bucket[burst, default: []].append(candidate)
+        }
+        return bucket.values
+            .filter { $0.count >= 2 }
+            .map { $0.sorted { $0.creationDate < $1.creationDate } }
+    }
+
+    /// Convenience: build a `PhotoCluster` from a burst group, using the same
+    /// keeper-selection rules as feature-print clusters. The reason string
+    /// includes the burst-specific context.
+    static func makeBurstCluster(_ burst: [SimilarPhotoCandidate]) -> PhotoCluster {
+        let keeper = pickKeeper(burst)
+        let reason = burstKeeperReason(burst, keeperId: keeper.id)
+        return PhotoCluster(
+            id: UUID(),
+            representativeDate: burst.first?.creationDate ?? Date(),
+            candidates: burst,
+            suggestedKeeperId: keeper.id,
+            suggestedKeeperReason: reason
+        )
+    }
+
+    /// Burst-specific explanation that mentions the burst context. Falls back
+    /// to the standard reasons when no burst-specific signal applies.
+    static func burstKeeperReason(_ candidates: [SimilarPhotoCandidate], keeperId: String) -> String {
+        guard let keeper = candidates.first(where: { $0.id == keeperId }) else {
+            return "Suggested keeper from this burst."
+        }
+        if keeper.isFavorite { return "Suggested from this burst — it's favorited." }
+        if keeper.hasBeenEdited { return "Suggested from this burst — it's been edited." }
+        if keeper.isInUserAlbum { return "Suggested from this burst — it's in an album." }
+        if keeper.isLivePhoto { return "Suggested from this burst — it's a Live Photo." }
+
+        let maxRes = candidates.map(\.resolution).max() ?? keeper.resolution
+        let hasResolutionTiebreaker = candidates.contains { $0.resolution < maxRes }
+        if keeper.resolution == maxRes && hasResolutionTiebreaker {
+            return "Suggested from this burst — highest resolution."
+        }
+        return "Suggested keeper from this burst."
+    }
+
     // MARK: - Time bucketing (pure)
 
     /// Group items into buckets where adjacent items (by date) are within `window` seconds.

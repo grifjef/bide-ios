@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bide — Camera Roll Review</title>
+  <meta name="description" content="A private, on-device photo declutter app for iPhone. No ads, no account, no subscription, no tracking. Keep the memories, clear the clutter.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Bide — Camera Roll Review">
+  <meta property="og:description" content="A private, on-device photo declutter app for iPhone. No ads, no account, no subscription, no tracking.">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235c8261'/%3E%3Cpath d='M30 60 C 30 35, 55 25, 70 30 C 70 55, 50 70, 30 65 Z' fill='%23f7f5ee'/%3E%3C/svg%3E">
+
+  <style>
+    :root {
+      --bg: #f7f5ee;
+      --bg-card: #ffffff;
+      --bg-section: #f0ede4;
+      --ink: #1a1d1a;
+      --ink-soft: #4a534b;
+      --ink-tertiary: #7b827d;
+      --forest: #5c8261;
+      --forest-dark: #466949;
+      --slate: #527090;
+      --slate-dark: #3e5775;
+      --amber: #b88b53;
+      --border: #e5e0d4;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161917;
+        --bg-card: #1f231f;
+        --bg-section: #1c1f1c;
+        --ink: #ece7d8;
+        --ink-soft: #b4b8ad;
+        --ink-tertiary: #7b8079;
+        --border: #2a2e2a;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
+      font-size: 17px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    h1, h2, h3 {
+      font-family: -apple-system, BlinkMacSystemFont, "New York", "Times New Roman", serif;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+    h1 { font-size: clamp(2.4rem, 6vw, 3.6rem); margin: 0 0 0.5em; font-weight: 600; }
+    h2 { font-size: clamp(1.6rem, 3.5vw, 2.2rem); margin: 0 0 0.5em; font-weight: 600; }
+    h3 { font-size: 1.15rem; margin: 0 0 0.4em; font-weight: 600; }
+    p { margin: 0 0 1em; color: var(--ink-soft); }
+    a { color: var(--slate-dark); text-decoration: underline; text-underline-offset: 3px; }
+    @media (prefers-color-scheme: dark) { a { color: #88a9ce; } }
+    a:hover { color: var(--forest-dark); }
+
+    /* Layout */
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+    header.site {
+      padding: 22px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 1.1rem; text-decoration: none; color: var(--ink);
+    }
+    .brand-mark {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: radial-gradient(circle at 50% 45%, #6e956d 0%, #466949 100%);
+      display: grid; place-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    .brand-mark svg { width: 20px; height: 20px; }
+    nav.site a { color: var(--ink-soft); text-decoration: none; margin-left: 18px; font-size: 0.95rem; }
+    nav.site a:hover { color: var(--ink); }
+
+    /* Hero */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+    }
+    .hero-tag {
+      display: inline-block;
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--forest-dark);
+      background: rgba(92, 130, 97, 0.12);
+      padding: 6px 12px;
+      border-radius: 999px;
+      margin-bottom: 18px;
+    }
+    @media (prefers-color-scheme: dark) { .hero-tag { color: #a5c2a8; } }
+    .hero p.lede {
+      font-size: clamp(1.05rem, 1.5vw, 1.25rem);
+      color: var(--ink-soft);
+      max-width: 38ch;
+      margin: 0 auto 32px;
+    }
+    .hero-icon {
+      width: 128px; height: 128px;
+      border-radius: 28px;
+      margin: 0 auto 28px;
+      background: radial-gradient(circle at 50% 45%, #6e956d 0%, #466949 100%);
+      display: grid; place-items: center;
+      box-shadow: 0 12px 28px rgba(20, 40, 24, 0.18);
+    }
+    .hero-icon svg { width: 80px; height: 80px; }
+    .cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--ink);
+      color: var(--bg);
+      padding: 14px 22px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.15s ease;
+    }
+    .cta:hover { transform: translateY(-1px); color: var(--bg); }
+    .cta.secondary {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--border);
+      margin-left: 10px;
+    }
+    .cta.secondary:hover { background: var(--bg-section); color: var(--ink); }
+    .cta-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .pending {
+      font-size: 0.85rem; color: var(--ink-tertiary);
+      margin-top: 14px;
+    }
+
+    /* Sections */
+    section {
+      padding: 60px 0;
+      border-top: 1px solid var(--border);
+    }
+    section.alt { background: var(--bg-section); }
+    .section-head { max-width: 60ch; margin: 0 auto 40px; text-align: center; }
+
+    /* Module grid */
+    .modules { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .module {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .module-icon {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      background: rgba(92, 130, 97, 0.14);
+      display: grid; place-items: center;
+      margin-bottom: 14px;
+      color: var(--forest);
+    }
+    @media (prefers-color-scheme: dark) {
+      .module-icon { background: rgba(110, 149, 109, 0.22); color: #a5c2a8; }
+    }
+    .module h3 { margin-bottom: 6px; }
+    .module p { margin-bottom: 0; font-size: 0.95rem; }
+
+    /* Promise list */
+    .promise {
+      display: grid; gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      margin-top: 32px;
+    }
+    .promise-item {
+      display: flex; gap: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .promise-check {
+      flex-shrink: 0;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--forest);
+      color: white;
+      display: grid; place-items: center;
+      font-size: 14px;
+    }
+    .promise-item p { margin: 0; color: var(--ink); font-weight: 500; }
+    .promise-item small { display: block; color: var(--ink-tertiary); margin-top: 4px; font-size: 0.85rem; font-weight: 400; }
+
+    /* FAQ */
+    .faq { display: grid; gap: 12px; max-width: 760px; margin: 0 auto; }
+    details {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0;
+    }
+    details summary {
+      cursor: pointer;
+      padding: 18px 20px;
+      font-weight: 600;
+      list-style: none;
+      display: flex; justify-content: space-between; align-items: center;
+      color: var(--ink);
+    }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::after {
+      content: "+"; font-size: 1.4rem; color: var(--ink-tertiary);
+      transition: transform 0.2s ease;
+    }
+    details[open] summary::after { transform: rotate(45deg); }
+    details > p, details > div { padding: 0 20px 18px; color: var(--ink-soft); }
+
+    /* Footer */
+    footer.site {
+      padding: 40px 24px;
+      text-align: center;
+      color: var(--ink-tertiary);
+      font-size: 0.9rem;
+    }
+    footer.site a { color: var(--ink-soft); }
+
+    /* Utility */
+    .center { text-align: center; }
+    @media (max-width: 600px) {
+      .hero { padding: 56px 0 40px; }
+      section { padding: 44px 0; }
+      .cta.secondary { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="site">
+  <a class="brand" href="/bide-ios/">
+    <span class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M5.5 13.5C5.5 9 9 6 14.5 6c.5 0 1 0 1.4.1.4 4-1.6 7.3-5.4 9C7.7 16.4 5.5 15.2 5.5 13.5z" fill="#f7f5ee"/>
+        <path d="M5 19c2-4 7-6 11-7" stroke="#f7f5ee" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </span>
+    Bide
+  </a>
+  <nav class="site">
+    <a href="#what">What it does</a>
+    <a href="#privacy">Privacy</a>
+    <a href="#faq">FAQ</a>
+    <a href="https://github.com/grifjef/bide-ios">Source</a>
+  </nav>
+</header>
+
+<main>
+
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M5.5 13.5C5.5 9 9 6 14.5 6c.5 0 1 0 1.4.1.4 4-1.6 7.3-5.4 9C7.7 16.4 5.5 15.2 5.5 13.5z" fill="#f7f5ee"/>
+          <path d="M5 19c2-4 7-6 11-7" stroke="#f7f5ee" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="hero-tag">Camera Roll Review · iPhone</span>
+      <h1>Bide your time.<br>Keep what matters.</h1>
+      <p class="lede">A private, on-device photo declutter app. No ads, no account, no subscription, no tracking. Nothing leaves your phone.</p>
+      <div class="cta-row">
+        <a class="cta" href="https://apps.apple.com/app/id6773746241">Get on the App Store</a>
+        <a class="cta secondary" href="https://github.com/grifjef/bide-ios">Read the source</a>
+      </div>
+      <p class="pending">In review. Public link goes live as soon as Apple approves.</p>
+    </div>
+  </section>
+
+  <section id="what">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Eight calm ways to clear your camera roll</h2>
+        <p>Each module is honest about what it's doing and why. Nothing auto-deletes; nothing pretends to be magic.</p>
+      </div>
+      <div class="modules">
+
+        <div class="module">
+          <div class="module-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 4h4v4h-4zM16 10h4v4h-4zM16 16h4v4h-4zM4 4h10v16H4z"/></svg>
+          </div>
+          <h3>Exact duplicates</h3>
+          <p>Byte-for-byte identical copies, found in seconds. Apple's built-in catches some — Bide catches imported re-copies too.</p>
+        </div>
+
+        <div class="module">
+          <div class="module-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4"/></svg>
+          </div>
+          <h3>Screen recordings</h3>
+          <p>Usually the biggest disposable files in your library. One module just for these so the reclaim is obvious.</p>
+        </div>
+
+        <div class="module">
+          <div class="module-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5h14v10H3z"/><path d="M19 8h2v9l-4-2h-2v-2h4z"/></svg>
+          </div>
+          <h3>Large videos</h3>
+          <p>Sorted by size. Tap to preview, decide, move to Recently Deleted. Favorites and hidden videos are always protected.</p>
+        </div>
+
+        <div class="module">
+          <div class="module-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10h8M8 14h5"/></svg>
+          </div>
+          <h3>Screenshots</h3>
+          <p>Grouped by month and year. Tap "Sort by type" to bucket into chat / app / visual using on-device OCR. Pick a year and clear all of it.</p>
+        </div>
+
+        <div class="module">
+          <div class="module-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <h3>Live Photos</h3>
+          <p>Each one carries a video sidecar that adds roughly 40% to its size. Surface the biggest ones first so you can decide deliberately.</p>
+        </div>
+
+        <div class="module">
+          <div class="module-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M5 5h7v7H5zM12 12h7v7h-7z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          </div>
+          <h3>Similar photos</h3>
+          <p>Time-bucketed clusters with a suggested keeper and the reason ("favorited", "highest resolution", "edited"). You decide.</p>
+        </div>
+
+        <div class="module">
+          <div class="module-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M5 12c4-7 12-7 14 0" stroke="currentColor" stroke-width="2" fill="none"/><path d="M5 16c4-3 10-3 14 0" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+          </div>
+          <h3>Blurry shots</h3>
+          <p>Conservative candidates only. Vision face detection protects portraits — slightly blurry photos of people stay in your library.</p>
+        </div>
+
+        <div class="module">
+          <div class="module-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v3H4zM4 11h16v9H4z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 4v4M15 4v4"/></svg>
+          </div>
+          <h3>On this day</h3>
+          <p>Photos from this calendar day across past years. A calm five-minute reason to open Bide every day — not just when storage gets tight.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section id="privacy" class="alt">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>The honest list</h2>
+        <p>Everything we will not do — backed by the code, not a marketing page.</p>
+      </div>
+      <div class="promise">
+        <div class="promise-item">
+          <div class="promise-check">✓</div>
+          <div><p>No accounts</p><small>Nothing to sign up for. Open the app, go.</small></div>
+        </div>
+        <div class="promise-item">
+          <div class="promise-check">✓</div>
+          <div><p>No ads</p><small>None. The app is calm because nothing is competing for your attention.</small></div>
+        </div>
+        <div class="promise-item">
+          <div class="promise-check">✓</div>
+          <div><p>No subscriptions or paywalls</p><small>Free forever. There's nothing locked.</small></div>
+        </div>
+        <div class="promise-item">
+          <div class="promise-check">✓</div>
+          <div><p>No third-party tracking SDKs</p><small>Verifiable in the public source. Apple's MetricKit is the only diagnostics — your data, on your device.</small></div>
+        </div>
+        <div class="promise-item">
+          <div class="promise-check">✓</div>
+          <div><p>No photos uploaded by us</p><small>Vision and PhotoKit run entirely on your iPhone. The Neural Engine does the work.</small></div>
+        </div>
+        <div class="promise-item">
+          <div class="promise-check">✓</div>
+          <div><p>No automatic deletion</p><small>Every removal goes through a Review Basket. Nothing is "Delete forever" — always Apple's Recently Deleted, 30-day recovery.</small></div>
+        </div>
+        <div class="promise-item">
+          <div class="promise-check">✓</div>
+          <div><p>No scare tactics</p><small>Bide never says "your phone is at risk", "critical storage", "junk detected". Calm beats panic.</small></div>
+        </div>
+        <div class="promise-item">
+          <div class="promise-check">✓</div>
+          <div><p>No App Tracking Transparency prompt</p><small>We never ask because there's nothing to track.</small></div>
+        </div>
+      </div>
+      <p style="margin-top: 36px; text-align: center;">
+        <a href="privacy/">Read the full privacy policy →</a>
+      </p>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Frequently asked</h2>
+        <p>The questions people most often ask before they trust a cleaner app.</p>
+      </div>
+      <div class="faq">
+
+        <details>
+          <summary>Does Bide upload my photos anywhere?</summary>
+          <p>No. All analysis — clustering similar photos, blur detection, OCR for screenshot categorization, face detection that protects portraits — runs on your iPhone's Neural Engine. There's no backend server we control. The only diagnostics involved come from Apple's MetricKit framework, which stays on your device and which you can read in Bide's Settings → Diagnostics.</p>
+        </details>
+
+        <details>
+          <summary>Does Bide delete photos automatically?</summary>
+          <p>Never. Every removal goes through a Review Basket and a confirmation step. Items move to Apple's <em>Recently Deleted</em> album, where Photos keeps them for 30 days before permanent deletion. Bide doesn't have a "Delete forever" mode and doesn't reach into Recently Deleted.</p>
+        </details>
+
+        <details>
+          <summary>Can I recover something I removed by accident?</summary>
+          <p>Yes — open Photos, scroll to Albums, tap <strong>Recently Deleted</strong>, and tap <strong>Recover</strong>. You have 30 days from the moment Bide moved the item before iOS permanently removes it. Bide's session-summary screen has a direct shortcut to that album.</p>
+        </details>
+
+        <details>
+          <summary>Why does Bide need photo library access?</summary>
+          <p>To find clutter we have to be able to see your photos. We request <em>read and write</em> access — read so we can analyze, write so we can move items to Recently Deleted on your behalf. You can choose Limited Access to give Bide a subset; the app supports this honestly with a banner noting scans will be partial.</p>
+        </details>
+
+        <details>
+          <summary>How is Bide different from the Duplicates album in Photos?</summary>
+          <p>Apple's built-in tool finds exact-byte duplicates and lets you merge them — useful, but narrow. Bide adds:</p>
+          <ul>
+            <li>Near-duplicates (similar bursts, near-identical shots from the same scene) via Vision feature prints</li>
+            <li>Screen recordings as a distinct, fast-clear category</li>
+            <li>Screenshots organized by month, year, and content type</li>
+            <li>Blurry-shot candidates with face protection</li>
+            <li>A daily "On this day" review for ongoing maintenance</li>
+            <li>A Review Basket so nothing happens accidentally</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>Is Bide really free? What's the catch?</summary>
+          <p>There's no catch. No ads. No premium tier. No "Pro" upsell. No data sale. The source code is public on GitHub so you can verify. The category — iPhone "cleaner apps" — is dominated by predatory subscription gates and scare-tactic marketing; Bide is what one of them should look like.</p>
+        </details>
+
+        <details>
+          <summary>Does Bide work with iCloud Photos?</summary>
+          <p>Yes. We never auto-download from iCloud (that would burn your cellular data and battery). Items that aren't downloaded locally show a "Tap to load" affordance with an iCloud icon — your tap is the consent to download for that specific asset.</p>
+        </details>
+
+        <details>
+          <summary>What's the deal with the name?</summary>
+          <p>"Bide" means to dwell, to wait patiently. It's the entire product philosophy in one syllable — take your time, no rush, look twice before letting anything go. We named the app for the feeling, not the function. The category is full of "Smart Cleaner" and "AI Cleanup"; we're the opposite of that.</p>
+        </details>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site">
+  <p>
+    <a href="https://github.com/grifjef/bide-ios">Source on GitHub</a> &nbsp;·&nbsp;
+    <a href="privacy/">Privacy policy</a> &nbsp;·&nbsp;
+    <a href="https://github.com/grifjef/bide-ios/issues">Report an issue</a>
+  </p>
+  <p>Built calmly by Jeff Griffith. © 2026.</p>
+</footer>
+
+</body>
+</html>

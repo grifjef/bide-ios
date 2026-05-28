@@ -7,6 +7,7 @@ struct BideApp: App {
     @State private var photoLibrary: PhotoLibraryService
     @State private var reviewBasket = ReviewBasket()
     @State private var dashboardSummary: DashboardSummary
+    @State private var metrics = MetricsService()
 
     @Environment(\.scenePhase) private var scenePhase
 
@@ -25,9 +26,16 @@ struct BideApp: App {
                 .environment(photoLibrary)
                 .environment(reviewBasket)
                 .environment(dashboardSummary)
+                .environment(metrics)
                 .modelContainer(modelContainer)
                 .tint(BideTheme.accent)
                 .preferredColorScheme(nil) // respect system setting
+                .task {
+                    // Subscribe to MetricKit deliveries. iOS posts payloads
+                    // once per day on app launch — we persist them locally
+                    // for the Diagnostics screen.
+                    metrics.subscribeToMetricKit()
+                }
         }
         .onChange(of: scenePhase) { _, new in
             // When the app returns to the foreground, re-read PhotoKit auth.

@@ -45,6 +45,19 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    NavigationLink {
+                        DiagnosticsView()
+                    } label: {
+                        Label("Diagnostics", systemImage: "waveform.path.ecg")
+                    }
+                } header: {
+                    Text("Transparency")
+                } footer: {
+                    Text("See Apple's MetricKit reports about Bide's behavior on your device. Nothing is transmitted.")
+                        .font(BideTheme.caption())
+                }
+
+                Section {
                     Label("Version 0.1.0", systemImage: "info.circle")
                     Link(destination: URL(string: "https://github.com/grifjef/bide-ios")!) {
                         Label("Source on GitHub", systemImage: "chevron.left.forwardslash.chevron.right")

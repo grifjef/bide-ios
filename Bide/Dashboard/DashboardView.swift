@@ -8,6 +8,13 @@ struct DashboardView: View {
 
     @State private var showReviewBasket: Bool = false
     @State private var showSettings: Bool = false
+    @State private var showWhatsNew: Bool = false
+
+    /// Last app version the user dismissed the "What's new" sheet for.
+    /// Empty string means "never seen" — fresh installs get this, and the
+    /// planner gates the sheet off for them (we don't pop What's New at
+    /// people meeting Bide for the first time).
+    @AppStorage("bide.lastSeenVersion") private var lastSeenVersion: String = ""
 
     var body: some View {
         NavigationStack {
@@ -64,10 +71,20 @@ struct DashboardView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }
+            .sheet(isPresented: $showWhatsNew) {
+                WhatsNewView(version: Self.currentVersion) {
+                    // Record the dismissal so this version doesn't trip
+                    // again on subsequent launches.
+                    lastSeenVersion = Self.currentVersion
+                    showWhatsNew = false
+                }
+                .interactiveDismissDisabled(false)
+            }
             .task {
                 // Kick off (or refresh) the dashboard summary on first appear.
                 // No-op if we already ran in this session via scenePhase.
                 summary.refreshIfNeeded()
+                evaluateWhatsNew()
             }
             .refreshable {
                 summary.refreshIfNeeded()
@@ -76,6 +93,35 @@ struct DashboardView: View {
                 }
             }
         }
+    }
+
+    /// Decide whether to surface the "What's new" sheet. Runs from the
+    /// dashboard's `.task` modifier so it fires exactly once per dashboard
+    /// appearance — usually the first thing after onboarding completes or
+    /// after the app is relaunched.
+    private func evaluateWhatsNew() {
+        let stored: String? = lastSeenVersion.isEmpty ? nil : lastSeenVersion
+        let shouldShow = WhatsNewPlanner.shouldShow(
+            currentVersion: Self.currentVersion,
+            lastSeenVersion: stored,
+            hasCompletedOnboarding: true
+        )
+        if shouldShow {
+            showWhatsNew = true
+        } else if lastSeenVersion.isEmpty {
+            // Fresh install: stamp the current version so the next version
+            // bump's sheet will actually fire. Stamping happens here (after
+            // onboarding) rather than in OnboardingView so the planner's
+            // boundary tests don't have to mock onboarding state.
+            lastSeenVersion = Self.currentVersion
+        }
+    }
+
+    /// Bundle short version string (e.g. "1.1.0"). Pulled at runtime so the
+    /// What's New sheet's header matches whatever build the user is on
+    /// without us having to remember to update a constant.
+    private static var currentVersion: String {
+        (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "?"
     }
 
     // MARK: - Dynamic subtitles

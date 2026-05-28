@@ -131,6 +131,17 @@ final class PhotoLibraryService {
     ///   - 4K-ish (≥ 3.5 Mpx): ~6 MB/s
     ///   - 1080p-ish (≥ 1.5 Mpx): ~1.5 MB/s
     ///   - 720p or lower: ~0.6 MB/s
+    /// Cheap estimate for a screenshot's byte size. HEIC compression on
+    /// UI-flat content (lots of solid color, text) hits ~0.15 bytes/pixel.
+    /// Used for dashboard summary stats where exact size doesn't matter.
+    nonisolated static func estimatedScreenshotBytes(
+        pixelWidth: Int,
+        pixelHeight: Int
+    ) -> Int64 {
+        guard pixelWidth > 0, pixelHeight > 0 else { return 0 }
+        return Int64(Double(pixelWidth * pixelHeight) * 0.15)
+    }
+
     nonisolated static func estimatedVideoBytes(
         pixelWidth: Int,
         pixelHeight: Int,

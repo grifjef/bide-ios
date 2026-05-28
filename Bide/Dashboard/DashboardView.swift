@@ -4,6 +4,7 @@ import Photos
 struct DashboardView: View {
     @Environment(PhotoLibraryService.self) private var photoLibrary
     @Environment(ReviewBasket.self) private var basket
+    @Environment(DashboardSummary.self) private var summary
 
     @State private var showReviewBasket: Bool = false
     @State private var showSettings: Bool = false
@@ -27,7 +28,7 @@ struct DashboardView: View {
                             ModuleCard(
                                 icon: "doc.on.doc.fill",
                                 title: "Exact duplicates",
-                                subtitle: "Byte-for-byte identical copies. Fast and safe.",
+                                subtitle: duplicatesSubtitle,
                                 disabled: !photoLibrary.hasReadAccess,
                                 badge: "Beta"
                             )
@@ -41,7 +42,7 @@ struct DashboardView: View {
                             ModuleCard(
                                 icon: "video.circle.fill",
                                 title: "Large videos",
-                                subtitle: "Find the biggest files first.",
+                                subtitle: largeVideosSubtitle,
                                 disabled: !photoLibrary.hasReadAccess
                             )
                         }
@@ -54,7 +55,7 @@ struct DashboardView: View {
                             ModuleCard(
                                 icon: "doc.on.doc",
                                 title: "Screenshots",
-                                subtitle: "Group and review old screenshots.",
+                                subtitle: screenshotsSubtitle,
                                 disabled: !photoLibrary.hasReadAccess
                             )
                         }
@@ -116,7 +117,50 @@ struct DashboardView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }
+            .task {
+                // Kick off (or refresh) the dashboard summary on first appear.
+                // No-op if we already ran in this session via scenePhase.
+                summary.refreshIfNeeded()
+            }
+            .refreshable {
+                summary.refreshIfNeeded()
+                while summary.isRefreshing {
+                    try? await Task.sleep(nanoseconds: 100_000_000)
+                }
+            }
         }
+    }
+
+    // MARK: - Dynamic subtitles
+
+    private var duplicatesSubtitle: String {
+        if let s = summary.duplicates {
+            if s.duplicateCount == 0 {
+                return "No duplicates found."
+            }
+            return "\(s.duplicateCount) duplicate\(s.duplicateCount == 1 ? "" : "s") · \(s.formattedReclaim) reclaimable"
+        }
+        return "Byte-for-byte identical copies. Fast and safe."
+    }
+
+    private var largeVideosSubtitle: String {
+        if let s = summary.largeVideos {
+            if s.count == 0 {
+                return "No large videos found."
+            }
+            return "\(s.count) video\(s.count == 1 ? "" : "s") · \(s.formattedTotal)"
+        }
+        return "Find the biggest files first."
+    }
+
+    private var screenshotsSubtitle: String {
+        if let s = summary.screenshots {
+            if s.count == 0 {
+                return "No screenshots found."
+            }
+            return "\(s.count) screenshot\(s.count == 1 ? "" : "s") · ~\(s.formattedTotal)"
+        }
+        return "Group and review old screenshots."
     }
 
     private var permissionBanner: some View {

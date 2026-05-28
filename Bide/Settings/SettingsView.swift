@@ -7,6 +7,12 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var lifetime: ReclaimHistoryStore.LifetimeTotals = .zero
+    @State private var recentSessions: [ReclaimSession] = []
+
+    /// Number of sessions to surface in the "Recent sessions" block. Old
+    /// sessions still feed lifetime totals — they're just folded into the
+    /// summary line so the list stays a glanceable history, not an archive.
+    private static let recentSessionLimit = 10
 
     var body: some View {
         NavigationStack {
@@ -19,6 +25,25 @@ struct SettingsView: View {
                     } footer: {
                         Text("Your own number, never transmitted anywhere.")
                             .font(BideTheme.caption())
+                    }
+                }
+
+                if !recentSessions.isEmpty {
+                    Section {
+                        ForEach(recentSessions) { session in
+                            recentSessionRow(session)
+                        }
+                    } header: {
+                        Text("Recent sessions")
+                    } footer: {
+                        if lifetime.sessionCount > recentSessions.count {
+                            let earlier = lifetime.sessionCount - recentSessions.count
+                            Text("Showing the \(recentSessions.count) most recent. \(earlier) earlier session\(earlier == 1 ? "" : "s") feed into the lifetime total above.")
+                                .font(BideTheme.caption())
+                        } else {
+                            Text("Each row is one confirmed cleanup. Bide doesn't track or transmit any of it.")
+                                .font(BideTheme.caption())
+                        }
                     }
                 }
 
@@ -78,9 +103,60 @@ struct SettingsView: View {
                 if let totals = try? store.lifetimeTotals() {
                     lifetime = totals
                 }
+                if let all = try? store.fetchAll() {
+                    recentSessions = Array(all.prefix(Self.recentSessionLimit))
+                }
             }
         }
     }
+
+    private func recentSessionRow(_ session: ReclaimSession) -> some View {
+        let bytesFormatted = ByteCountFormatter.string(
+            fromByteCount: session.bytesReclaimed,
+            countStyle: .file
+        )
+        let itemsLabel = "\(session.itemCount) item\(session.itemCount == 1 ? "" : "s")"
+        return HStack(alignment: .center, spacing: BideTheme.m) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(Self.relativeDateFormatter.localizedString(for: session.completedAt, relativeTo: Date()).capitalized)
+                    .font(BideTheme.body())
+                Text(Self.absoluteDateFormatter.string(from: session.completedAt))
+                    .font(BideTheme.caption())
+                    .foregroundStyle(BideTheme.textTertiary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(bytesFormatted)
+                    .font(BideTheme.numeric())
+                    .foregroundStyle(BideTheme.primary)
+                Text(itemsLabel)
+                    .font(BideTheme.caption())
+                    .foregroundStyle(BideTheme.textSecondary)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(itemsLabel), \(bytesFormatted), on \(Self.accessibleDateFormatter.string(from: session.completedAt)).")
+    }
+
+    private static let relativeDateFormatter: RelativeDateTimeFormatter = {
+        let f = RelativeDateTimeFormatter()
+        f.unitsStyle = .full
+        return f
+    }()
+
+    private static let absoluteDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .short
+        return f
+    }()
+
+    private static let accessibleDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .long
+        f.timeStyle = .short
+        return f
+    }()
 
     private var lifetimeRow: some View {
         VStack(alignment: .leading, spacing: BideTheme.s) {

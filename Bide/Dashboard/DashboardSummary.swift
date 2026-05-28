@@ -72,8 +72,46 @@ final class DashboardSummary {
     private let photoLibrary: PhotoLibraryService
     private var currentTask: Task<Void, Never>?
 
+    /// Listens to library changes so dashboard counts stay current when the
+    /// user deletes things in a module and returns to the dashboard. Without
+    /// this, the headlines would lie until the next pull-to-refresh.
+    private var libraryObserver: PhotoLibraryObserver?
+
+    /// Coalesces rapid-fire library change events (a multi-asset delete fires
+    /// once per asset). 750ms feels responsive without thrashing the scans.
+    private var pendingChangeTask: Task<Void, Never>?
+    private static let changeDebounceNanos: UInt64 = 750_000_000
+
+    /// Set when a library change arrives mid-refresh. After the current
+    /// refresh finishes we re-run so the post-change state lands.
+    private var refreshDirty: Bool = false
+
     init(photoLibrary: PhotoLibraryService) {
         self.photoLibrary = photoLibrary
+        Task { @MainActor [weak self] in
+            self?.libraryObserver = PhotoLibraryObserver { [weak self] _ in
+                Task { @MainActor in
+                    self?.handleLibraryChange()
+                }
+            }
+        }
+    }
+
+    /// Coalesce-and-refresh hook. PhotoKit fires the observer on a background
+    /// queue per asset change; we ride out the burst, then re-scan once.
+    /// If a refresh is already underway, mark dirty so the in-flight task
+    /// re-runs after it finishes — never miss a post-deletion update.
+    private func handleLibraryChange() {
+        pendingChangeTask?.cancel()
+        pendingChangeTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: Self.changeDebounceNanos)
+            guard !Task.isCancelled, let self else { return }
+            if self.isRefreshing {
+                self.refreshDirty = true
+            } else {
+                self.refreshIfNeeded()
+            }
+        }
     }
 
     /// Refresh all three quick-scan summaries. Existing values stay visible
@@ -96,6 +134,12 @@ final class DashboardSummary {
             }
             self.isRefreshing = false
             self.lastRefreshAt = Date()
+            // If a library change arrived while we were scanning, re-scan
+            // once more so the latest deletions are reflected.
+            if self.refreshDirty {
+                self.refreshDirty = false
+                self.refreshIfNeeded()
+            }
         }
     }
 

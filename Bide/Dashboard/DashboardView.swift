@@ -31,104 +31,10 @@ struct DashboardView: View {
                         .buttonStyle(.plain)
                     }
 
-                    // Module cards
-                    VStack(spacing: BideTheme.m) {
-                        NavigationLink {
-                            ExactDuplicatesView()
-                        } label: {
-                            ModuleCard(
-                                icon: "doc.on.doc.fill",
-                                title: "Exact duplicates",
-                                subtitle: duplicatesSubtitle,
-                                disabled: !photoLibrary.hasReadAccess,
-                                badge: "Beta"
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!photoLibrary.hasReadAccess)
-
-                        NavigationLink {
-                            ScreenRecordingsView()
-                        } label: {
-                            ModuleCard(
-                                icon: "record.circle.fill",
-                                title: "Screen recordings",
-                                subtitle: screenRecordingsSubtitle,
-                                disabled: !photoLibrary.hasReadAccess,
-                                badge: "Beta"
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!photoLibrary.hasReadAccess)
-
-                        NavigationLink {
-                            LargeVideosView()
-                        } label: {
-                            ModuleCard(
-                                icon: "video.circle.fill",
-                                title: "Large videos",
-                                subtitle: largeVideosSubtitle,
-                                disabled: !photoLibrary.hasReadAccess
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!photoLibrary.hasReadAccess)
-
-                        NavigationLink {
-                            ScreenshotsView()
-                        } label: {
-                            ModuleCard(
-                                icon: "doc.on.doc",
-                                title: "Screenshots",
-                                subtitle: screenshotsSubtitle,
-                                disabled: !photoLibrary.hasReadAccess
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!photoLibrary.hasReadAccess)
-
-                        NavigationLink {
-                            LivePhotosView()
-                        } label: {
-                            ModuleCard(
-                                icon: "livephoto",
-                                title: "Live Photos",
-                                subtitle: livePhotosSubtitle,
-                                disabled: !photoLibrary.hasReadAccess,
-                                badge: "Beta"
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!photoLibrary.hasReadAccess)
-
-                        NavigationLink {
-                            SimilarPhotosView()
-                        } label: {
-                            ModuleCard(
-                                icon: "square.on.square.dashed",
-                                title: "Similar photos",
-                                subtitle: "Clusters of near-duplicates with a suggested keeper.",
-                                disabled: !photoLibrary.hasReadAccess,
-                                badge: "Beta"
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!photoLibrary.hasReadAccess)
-
-                        NavigationLink {
-                            BlurryShotsView()
-                        } label: {
-                            ModuleCard(
-                                icon: "scribble.variable",
-                                title: "Blurry shots",
-                                subtitle: "Candidates only — never auto-suggested.",
-                                disabled: !photoLibrary.hasReadAccess,
-                                badge: "Beta"
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!photoLibrary.hasReadAccess)
-                    }
+                    // Sectioned module groups
+                    quickWinsSection
+                    cleanupSection
+                    memoryReviewSection
                 }
                 .padding(BideTheme.m)
             }
@@ -210,6 +116,140 @@ struct DashboardView: View {
             return "\(s.count) screenshot\(s.count == 1 ? "" : "s") · ~\(s.formattedTotal)"
         }
         return "Group and review old screenshots."
+    }
+
+    // MARK: - Sections
+
+    private var quickWinsSection: some View {
+        VStack(alignment: .leading, spacing: BideTheme.s) {
+            sectionHeader(title: "Quick wins", subtitle: "Fast, safe, high-confidence cleanup")
+
+            NavigationLink {
+                ExactDuplicatesView()
+            } label: {
+                ModuleCard(
+                    icon: "doc.on.doc.fill",
+                    title: "Exact duplicates",
+                    subtitle: duplicatesSubtitle,
+                    disabled: !photoLibrary.hasReadAccess,
+                    badge: "Beta"
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(!photoLibrary.hasReadAccess)
+
+            NavigationLink {
+                ScreenRecordingsView()
+            } label: {
+                ModuleCard(
+                    icon: "record.circle.fill",
+                    title: "Screen recordings",
+                    subtitle: screenRecordingsSubtitle,
+                    disabled: !photoLibrary.hasReadAccess,
+                    badge: "Beta"
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(!photoLibrary.hasReadAccess)
+
+            NavigationLink {
+                LargeVideosView()
+            } label: {
+                ModuleCard(
+                    icon: "video.circle.fill",
+                    title: "Large videos",
+                    subtitle: largeVideosSubtitle,
+                    disabled: !photoLibrary.hasReadAccess
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(!photoLibrary.hasReadAccess)
+        }
+    }
+
+    private var cleanupSection: some View {
+        VStack(alignment: .leading, spacing: BideTheme.s) {
+            sectionHeader(title: "Bulk review", subtitle: "Older clutter, organized for quick decisions")
+
+            NavigationLink {
+                ScreenshotsView()
+            } label: {
+                ModuleCard(
+                    icon: "doc.on.doc",
+                    title: "Screenshots",
+                    subtitle: screenshotsSubtitle,
+                    disabled: !photoLibrary.hasReadAccess
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(!photoLibrary.hasReadAccess)
+
+            NavigationLink {
+                LivePhotosView()
+            } label: {
+                ModuleCard(
+                    icon: "livephoto",
+                    title: "Live Photos",
+                    subtitle: livePhotosSubtitle,
+                    disabled: !photoLibrary.hasReadAccess,
+                    badge: "Beta"
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(!photoLibrary.hasReadAccess)
+        }
+    }
+
+    private var memoryReviewSection: some View {
+        VStack(alignment: .leading, spacing: BideTheme.s) {
+            sectionHeader(
+                title: "Careful review",
+                subtitle: "Close looks where false positives would hurt"
+            )
+
+            NavigationLink {
+                SimilarPhotosView()
+            } label: {
+                ModuleCard(
+                    icon: "square.on.square.dashed",
+                    title: "Similar photos",
+                    subtitle: "Clusters of near-duplicates with a suggested keeper.",
+                    disabled: !photoLibrary.hasReadAccess,
+                    badge: "Beta"
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(!photoLibrary.hasReadAccess)
+
+            NavigationLink {
+                BlurryShotsView()
+            } label: {
+                ModuleCard(
+                    icon: "scribble.variable",
+                    title: "Blurry shots",
+                    subtitle: "Candidates only — never auto-suggested.",
+                    disabled: !photoLibrary.hasReadAccess,
+                    badge: "Beta"
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(!photoLibrary.hasReadAccess)
+        }
+    }
+
+    private func sectionHeader(title: String, subtitle: String) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(title)
+                .font(BideTheme.cardTitle())
+            Text(subtitle)
+                .font(BideTheme.caption())
+                .foregroundStyle(BideTheme.textSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, BideTheme.s)
+        .padding(.horizontal, BideTheme.xs)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
     }
 
     private func onThisDayCard(_ s: DashboardSummary.OnThisDayCount) -> some View {

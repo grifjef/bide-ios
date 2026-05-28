@@ -40,7 +40,7 @@ Live URL: *(App Store — v1.0 submitted, Waiting for Review as of 2026-05-27)*
 │   ├── Persistence/               # BideStore, IndexedAssetStore, ReclaimHistoryStore, FeaturePrintCoder
 │   ├── ReviewBasket/              # ReviewBasket model + UI + SessionSummaryView
 │   └── Settings/                  # SettingsView, HowBideWorksView, DiagnosticsView
-├── BideTests/               # XCTest unit tests (152 tests as of v0.6)
+├── BideTests/               # XCTest unit tests (163 tests as of v1.1)
 ├── BideUITests/             # XCUITest UI tests (launch smoke)
 ├── product/
 │   └── spec.md              # full product specification
@@ -163,7 +163,7 @@ For every feature / bug / enhancement:
 
 - **SwiftLint** — strict mode
 - **xcodebuild build** — must succeed for iOS Simulator (iPhone 17 Pro on Xcode 26)
-- **xcodebuild test** — all tests pass (152 unit + 1 UI as of v0.6 P2), coverage uploaded to SonarCloud
+- **xcodebuild test** — all tests pass (163 unit + 1 UI as of v1.1), coverage uploaded to SonarCloud
 - **SonarCloud** — Swift analyzer; runs via GitHub Action (Automatic Analysis disabled). Currently non-blocking until `SONAR_TOKEN` is in repo secrets.
 - **Dependabot** — weekly SPM + GitHub Actions updates
 - **Claude `/security-review`** — `.github/workflows/security-review.yml` runs on PRs. Non-blocking until `ANTHROPIC_API_KEY` is in repo secrets.

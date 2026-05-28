@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// Pure signature-based duplicate detection. Groups assets that share the same
 /// `DuplicateSignature` (creation timestamp + dimensions + size bucket) and
@@ -11,6 +12,15 @@ enum ExactDuplicateDetector {
     /// Returns groups of size ≥ 2, sorted by total reclaimable bytes descending
     /// (most space-saving groups first).
     static func detect(_ candidates: [SimilarPhotoCandidate]) -> [ExactDuplicateGroup] {
+        let id = BideSignposts.scansSignposter.makeSignpostID()
+        let state = BideSignposts.scansSignposter.beginInterval(
+            "exactDuplicates.detect",
+            id: id,
+            "candidates=\(candidates.count, privacy: .public)"
+        )
+        defer {
+            BideSignposts.scansSignposter.endInterval("exactDuplicates.detect", state)
+        }
         var bySignature: [DuplicateSignature: [SimilarPhotoCandidate]] = [:]
         for candidate in candidates {
             // Skip protected items entirely. We never want to suggest deleting

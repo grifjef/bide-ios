@@ -492,6 +492,88 @@ final class PhotoLibraryService {
 
     // MARK: - Thumbnails
 
+    /// Single shared `PHCachingImageManager` for all in-list thumbnail
+    /// requests. Caches recently-decoded thumbnails so scrolling back to a
+    /// row that already rendered is instant. The default `PHImageManager`
+    /// re-decodes every time, which gets noticeable in the Screenshots month
+    /// grid (thousands of items).
+    ///
+    /// Stays on `PHImageManager.default()` for the explicit
+    /// "download from iCloud" path because that's a one-shot user-initiated
+    /// fetch with `isNetworkAccessAllowed = true`; mixing it into the
+    /// caching pool would risk caching a deg-mode partial.
+    nonisolated static let cachingManager: PHCachingImageManager = {
+        let m = PHCachingImageManager()
+        m.allowsCachingHighQualityImages = false  // thumbnails only
+        return m
+    }()
+
+    /// Tell PhotoKit to start prefetching thumbnails for a list of asset
+    /// identifiers at the given size. Call from a view's `.task` modifier
+    /// when the user enters a screen with many thumbnails (Screenshots
+    /// grid, Similar Photos cluster review). The cache is a no-op for
+    /// identifiers it's already prewarmed, so re-calling is cheap.
+    nonisolated func startPrewarmingThumbnails(
+        for identifiers: [String],
+        targetSize: CGSize,
+        contentMode: PHImageContentMode = .aspectFill
+    ) {
+        guard !identifiers.isEmpty else { return }
+        let assets = Self.resolveAssetsStatic(for: identifiers)
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .opportunistic
+        options.isNetworkAccessAllowed = false
+        options.resizeMode = .fast
+        Self.cachingManager.startCachingImages(
+            for: assets,
+            targetSize: targetSize,
+            contentMode: contentMode,
+            options: options
+        )
+    }
+
+    /// Tell PhotoKit it can drop cached thumbnails for these identifiers.
+    /// Call in `.onDisappear` (or when the view's identifier set changes
+    /// substantially) so we don't hold pixels we won't use again.
+    nonisolated func stopPrewarmingThumbnails(
+        for identifiers: [String],
+        targetSize: CGSize,
+        contentMode: PHImageContentMode = .aspectFill
+    ) {
+        guard !identifiers.isEmpty else { return }
+        let assets = Self.resolveAssetsStatic(for: identifiers)
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .opportunistic
+        options.isNetworkAccessAllowed = false
+        options.resizeMode = .fast
+        Self.cachingManager.stopCachingImages(
+            for: assets,
+            targetSize: targetSize,
+            contentMode: contentMode,
+            options: options
+        )
+    }
+
+    /// Drop the entire prewarm cache. Call sparingly — useful when the user
+    /// returns to the dashboard so the per-screen memory pressure resets.
+    nonisolated func stopAllThumbnailPrewarming() {
+        Self.cachingManager.stopCachingImagesForAllAssets()
+    }
+
+    /// nonisolated mirror of `resolveAssets` because the prewarm hooks are
+    /// non-actor-bound so views can call them from `.task` / `.onDisappear`
+    /// without a hop.
+    nonisolated private static func resolveAssetsStatic(for identifiers: [String]) -> [PHAsset] {
+        guard !identifiers.isEmpty else { return [] }
+        let fetched = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
+        var result: [PHAsset] = []
+        result.reserveCapacity(fetched.count)
+        fetched.enumerateObjects { asset, _, _ in
+            result.append(asset)
+        }
+        return result
+    }
+
     /// Outcome of a thumbnail request, with enough metadata for the UI to
     /// distinguish "nothing here" from "in iCloud, not downloaded yet".
     struct ThumbnailResult: Sendable {
@@ -539,7 +621,10 @@ final class PhotoLibraryService {
 
         return await withCheckedContinuation { (continuation: CheckedContinuation<ThumbnailResult, Never>) in
             var resumed = false
-            PHImageManager.default().requestImage(
+            // Route through the caching manager so repeated requests for
+            // identifiers we've already prewarmed return from the in-memory
+            // cache instead of re-decoding from disk.
+            Self.cachingManager.requestImage(
                 for: asset,
                 targetSize: targetSize,
                 contentMode: contentMode,

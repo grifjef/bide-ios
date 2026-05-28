@@ -19,6 +19,16 @@ struct SettingsView: View {
     /// goes live and the marketing domain is in DNS.
     private static let shareURL = URL(string: "https://github.com/grifjef/bide-ios")!
 
+    /// Composed "1.1.0 (2)" string for the About row. Reads from the bundle
+    /// at runtime so it can never go stale against project.yml — the previous
+    /// hardcoded "0.1.0" was wrong by the time v1.1 was being prepared.
+    private static var appVersion: String {
+        let info = Bundle.main.infoDictionary
+        let marketing = (info?["CFBundleShortVersionString"] as? String) ?? "?"
+        let build = (info?["CFBundleVersion"] as? String) ?? "?"
+        return "\(marketing) (\(build))"
+    }
+
     /// Personalized share copy. Includes the user's lifetime number when
     /// they've actually done something with the app — turns a generic plug
     /// into a small flex without exposing anything beyond a byte count.
@@ -126,7 +136,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Label("Version 0.1.0", systemImage: "info.circle")
+                    Label("Version \(Self.appVersion)", systemImage: "info.circle")
                     Link(destination: URL(string: "https://github.com/grifjef/bide-ios")!) {
                         Label("Source on GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
                     }

@@ -3,6 +3,7 @@ import Photos
 import Vision
 import UIKit
 import Observation
+import os
 
 /// Orchestrates the similar-photo scan:
 ///   1. Fetch candidates from PhotoKit
@@ -169,6 +170,15 @@ final class SimilarPhotosScanService {
         scanLimit: Int,
         thumbnailSize: CGSize
     ) async {
+        let scanID = BideSignposts.scansSignposter.makeSignpostID()
+        let scanState = BideSignposts.scansSignposter.beginInterval(
+            "similar.scan",
+            id: scanID,
+            "limit=\(scanLimit, privacy: .public)"
+        )
+        defer {
+            BideSignposts.scansSignposter.endInterval("similar.scan", scanState)
+        }
         // 1. Stream-read all candidates with progress, then process.
         // We accumulate the full set (memory-bounded — a SimilarPhotoCandidate
         // is ~200 bytes; 50k candidates ≈ 10 MB) because time-bucketing and

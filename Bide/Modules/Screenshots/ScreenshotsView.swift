@@ -27,8 +27,30 @@ struct ScreenshotsView: View {
                 )
             }
             await viewModel?.loadIfNeeded()
+            // Once the load completes we know the identifier set — kick
+            // PhotoKit's caching manager so scrolling the (potentially
+            // thousands-deep) grid is smooth instead of redecode-per-tile.
+            if let identifiers = viewModel?.allIdentifiers, !identifiers.isEmpty {
+                photoLibrary.startPrewarmingThumbnails(
+                    for: identifiers,
+                    targetSize: Self.gridThumbnailSize
+                )
+            }
+        }
+        .onDisappear {
+            if let identifiers = viewModel?.allIdentifiers, !identifiers.isEmpty {
+                photoLibrary.stopPrewarmingThumbnails(
+                    for: identifiers,
+                    targetSize: Self.gridThumbnailSize
+                )
+            }
         }
     }
+
+    /// Target thumbnail size shared by `.task` prewarm hook and the row
+    /// rendering. Keep in sync with `ScreenshotGridCell`'s `ThumbnailView`
+    /// `targetSize` so the cache key matches.
+    private static let gridThumbnailSize = CGSize(width: 220, height: 220)
 
     @ViewBuilder
     private func content(for viewModel: ScreenshotsViewModel) -> some View {

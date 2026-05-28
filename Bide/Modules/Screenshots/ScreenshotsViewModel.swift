@@ -43,6 +43,13 @@ final class ScreenshotsViewModel {
     private(set) var totalCount: Int = 0
     private(set) var protectedCount: Int = 0
 
+    /// Flat list of every loaded screenshot's local identifier. The view uses
+    /// this to drive `PHCachingImageManager` prewarming so the grid scrolls
+    /// without the per-row decode hitch.
+    var allIdentifiers: [String] {
+        groups.flatMap { $0.items.map(\.localIdentifier) }
+    }
+
     /// Active filter — when non-nil, the view shows only screenshots whose
     /// stored category matches. Unanalyzed screenshots are always shown
     /// regardless of filter (we don't hide things we haven't OCR'd yet).

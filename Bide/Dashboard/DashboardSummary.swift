@@ -1,6 +1,7 @@
 import Foundation
 import Photos
 import Observation
+import os
 
 /// Lightweight pre-scan that populates the dashboard's module-card headlines
 /// with real counts and reclaimable bytes. Only runs the *cheap* scans —
@@ -66,25 +67,27 @@ final class DashboardSummary {
     private(set) var duplicates: DuplicatesCount?
     private(set) var livePhotos: LivePhotosCount?
     private(set) var onThisDay: OnThisDayCount?
-    private(set) var isRefreshing: Bool = false
     private(set) var lastRefreshAt: Date?
+
+    /// Surface for the freshness pill on the dashboard.
+    var isRefreshing: Bool { coalescer.isRefreshing }
 
     private let photoLibrary: PhotoLibraryService
     private var currentTask: Task<Void, Never>?
 
+    /// Pure-logic state machine for "rapid changes + mid-flight changes ==
+    /// at-most-one refresh in flight, no missed events." Extracted so it's
+    /// fully unit-tested without PhotoKit.
+    private var coalescer = RefreshCoalescer()
+
     /// Listens to library changes so dashboard counts stay current when the
-    /// user deletes things in a module and returns to the dashboard. Without
-    /// this, the headlines would lie until the next pull-to-refresh.
+    /// user deletes things in a module and returns to the dashboard.
     private var libraryObserver: PhotoLibraryObserver?
 
     /// Coalesces rapid-fire library change events (a multi-asset delete fires
     /// once per asset). 750ms feels responsive without thrashing the scans.
     private var pendingChangeTask: Task<Void, Never>?
     private static let changeDebounceNanos: UInt64 = 750_000_000
-
-    /// Set when a library change arrives mid-refresh. After the current
-    /// refresh finishes we re-run so the post-change state lands.
-    private var refreshDirty: Bool = false
 
     init(photoLibrary: PhotoLibraryService) {
         self.photoLibrary = photoLibrary
@@ -97,30 +100,42 @@ final class DashboardSummary {
         }
     }
 
-    /// Coalesce-and-refresh hook. PhotoKit fires the observer on a background
-    /// queue per asset change; we ride out the burst, then re-scan once.
-    /// If a refresh is already underway, mark dirty so the in-flight task
-    /// re-runs after it finishes — never miss a post-deletion update.
+    /// PhotoKit fires the observer on a background queue per asset change;
+    /// we ride out the burst, then ask the coalescer what to do.
     private func handleLibraryChange() {
         pendingChangeTask?.cancel()
         pendingChangeTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: Self.changeDebounceNanos)
             guard !Task.isCancelled, let self else { return }
-            if self.isRefreshing {
-                self.refreshDirty = true
-            } else {
-                self.refreshIfNeeded()
+            switch self.coalescer.processDebouncedChange() {
+            case .noop:
+                break
+            case .startRefresh:
+                // Coalescer already flipped to isRefreshing. Spin up the work.
+                self.startRefreshTask()
             }
         }
     }
 
-    /// Refresh all three quick-scan summaries. Existing values stay visible
-    /// until each section's new value lands — no flicker to "—".
+    /// Refresh all section summaries. Existing values stay visible until
+    /// each section's new value lands — no flicker to "—". No-op if a
+    /// refresh is already in flight (the coalescer enforces this).
     func refreshIfNeeded() {
         guard photoLibrary.hasReadAccess else { return }
-        guard !isRefreshing else { return }
+        guard coalescer.tryBeginRefresh() else { return }
+        startRefreshTask()
+    }
+
+    /// Internal entry point used by both `refreshIfNeeded` and the
+    /// library-change debounce path. Assumes the coalescer is already in
+    /// the refreshing state.
+    private func startRefreshTask() {
         currentTask?.cancel()
-        isRefreshing = true
+        let signpostID = BideSignposts.scansSignposter.makeSignpostID()
+        let state = BideSignposts.scansSignposter.beginInterval(
+            "dashboard.refresh",
+            id: signpostID
+        )
 
         currentTask = Task { [weak self, photoLibrary] in
             guard let self else { return }
@@ -132,80 +147,105 @@ final class DashboardSummary {
                 group.addTask { await self.refreshLivePhotos(photoLibrary: photoLibrary) }
                 group.addTask { await self.refreshOnThisDay(photoLibrary: photoLibrary) }
             }
-            self.isRefreshing = false
+            BideSignposts.scansSignposter.endInterval("dashboard.refresh", state)
             self.lastRefreshAt = Date()
-            // If a library change arrived while we were scanning, re-scan
-            // once more so the latest deletions are reflected.
-            if self.refreshDirty {
-                self.refreshDirty = false
-                self.refreshIfNeeded()
+            // Hand off to the coalescer to decide whether a follow-up is
+            // needed (a library change arrived mid-flight).
+            switch self.coalescer.completeRefresh() {
+            case .done:
+                break
+            case .startFollowupRefresh:
+                self.startRefreshTask()
             }
         }
     }
 
     func cancel() {
         currentTask?.cancel()
-        isRefreshing = false
+        coalescer.reset()
     }
 
     // MARK: - Section refreshes
 
+    /// Helper: wrap an async section refresh in an OSSignpost interval so
+    /// each phase shows up independently in Instruments. The signpost name
+    /// is a `StaticString` per OSSignposter requirements.
+    private func signposted<T>(_ name: StaticString, _ work: () async -> T) async -> T {
+        let id = BideSignposts.scansSignposter.makeSignpostID()
+        let state = BideSignposts.scansSignposter.beginInterval(name, id: id)
+        let result = await work()
+        BideSignposts.scansSignposter.endInterval(name, state)
+        return result
+    }
+
     private func refreshLargeVideos(photoLibrary: PhotoLibraryService) async {
-        let videos = await photoLibrary.fetchLargeVideos(limit: 200)
-        // We only count videos above a meaningful size threshold so the headline
-        // matches what a user would actually act on — 100 MB minimum.
-        let actionable = videos.filter { $0.fileSize > 100_000_000 }
-        let total = actionable.reduce(Int64(0)) { $0 + $1.fileSize }
-        largeVideos = LargeVideosCount(count: actionable.count, totalBytes: total)
+        await signposted("dashboard.largeVideos") {
+            let videos = await photoLibrary.fetchLargeVideos(limit: 200)
+            // We only count videos above a meaningful size threshold so the headline
+            // matches what a user would actually act on — 100 MB minimum.
+            let actionable = videos.filter { $0.fileSize > 100_000_000 }
+            let total = actionable.reduce(Int64(0)) { $0 + $1.fileSize }
+            largeVideos = LargeVideosCount(count: actionable.count, totalBytes: total)
+        }
     }
 
     private func refreshScreenRecordings(photoLibrary: PhotoLibraryService) async {
-        let recordings = await photoLibrary.fetchScreenRecordings(limit: 200)
-        // Show everything — screen recordings are usually disposable regardless of size
-        let total = recordings.reduce(Int64(0)) { $0 + $1.fileSize }
-        screenRecordings = ScreenRecordingsCount(count: recordings.count, totalBytes: total)
+        await signposted("dashboard.screenRecordings") {
+            let recordings = await photoLibrary.fetchScreenRecordings(limit: 200)
+            // Show everything — screen recordings are usually disposable regardless of size
+            let total = recordings.reduce(Int64(0)) { $0 + $1.fileSize }
+            screenRecordings = ScreenRecordingsCount(count: recordings.count, totalBytes: total)
+        }
     }
 
     private func refreshScreenshots(photoLibrary: PhotoLibraryService) async {
-        let shots = await photoLibrary.fetchScreenshots(limit: 5_000)
-        let estimated = shots.reduce(Int64(0)) { sum, item in
-            sum + PhotoLibraryService.estimatedScreenshotBytes(
-                pixelWidth: item.pixelWidth,
-                pixelHeight: item.pixelHeight
-            )
+        await signposted("dashboard.screenshots") {
+            let shots = await photoLibrary.fetchScreenshots(limit: 5_000)
+            let estimated = shots.reduce(Int64(0)) { sum, item in
+                sum + PhotoLibraryService.estimatedScreenshotBytes(
+                    pixelWidth: item.pixelWidth,
+                    pixelHeight: item.pixelHeight
+                )
+            }
+            screenshots = ScreenshotsCount(count: shots.count, estimatedBytes: estimated)
         }
-        screenshots = ScreenshotsCount(count: shots.count, estimatedBytes: estimated)
     }
 
     private func refreshLivePhotos(photoLibrary: PhotoLibraryService) async {
-        let photos = await photoLibrary.fetchLivePhotos(limit: 200)
-        let total = photos.reduce(Int64(0)) { $0 + $1.fileSize }
-        livePhotos = LivePhotosCount(count: photos.count, totalBytes: total)
+        await signposted("dashboard.livePhotos") {
+            let photos = await photoLibrary.fetchLivePhotos(limit: 200)
+            let total = photos.reduce(Int64(0)) { $0 + $1.fileSize }
+            livePhotos = LivePhotosCount(count: photos.count, totalBytes: total)
+        }
     }
 
     private func refreshOnThisDay(photoLibrary: PhotoLibraryService) async {
-        let candidates = await photoLibrary.fetchPhotoCandidates(limit: 5_000)
-        let groups = OnThisDayMatcher.groupsForToday(
-            candidates: candidates,
-            targetDate: Date()
-        )
-        let calendar = Calendar.current
-        let targetYear = calendar.component(.year, from: Date())
-        let yearsAgo = groups.first.map { targetYear - $0.id } ?? 0
-        onThisDay = OnThisDayCount(
-            totalCount: OnThisDayMatcher.totalCount(groups),
-            yearsAgo: yearsAgo
-        )
+        await signposted("dashboard.onThisDay") {
+            let candidates = await photoLibrary.fetchPhotoCandidates(limit: 5_000)
+            let groups = OnThisDayMatcher.groupsForToday(
+                candidates: candidates,
+                targetDate: Date()
+            )
+            let calendar = Calendar.current
+            let targetYear = calendar.component(.year, from: Date())
+            let yearsAgo = groups.first.map { targetYear - $0.id } ?? 0
+            onThisDay = OnThisDayCount(
+                totalCount: OnThisDayMatcher.totalCount(groups),
+                yearsAgo: yearsAgo
+            )
+        }
     }
 
     private func refreshDuplicates(photoLibrary: PhotoLibraryService) async {
-        let candidates = await photoLibrary.fetchPhotoCandidates(limit: 5_000)
-        let groups = ExactDuplicateDetector.detect(candidates)
-        let summary = ExactDuplicateDetector.summary(groups)
-        duplicates = DuplicatesCount(
-            groupCount: summary.groupCount,
-            duplicateCount: summary.duplicateCount,
-            reclaimableBytes: summary.reclaimableBytes
-        )
+        await signposted("dashboard.duplicates") {
+            let candidates = await photoLibrary.fetchPhotoCandidates(limit: 5_000)
+            let groups = ExactDuplicateDetector.detect(candidates)
+            let summary = ExactDuplicateDetector.summary(groups)
+            duplicates = DuplicatesCount(
+                groupCount: summary.groupCount,
+                duplicateCount: summary.duplicateCount,
+                reclaimableBytes: summary.reclaimableBytes
+            )
+        }
     }
 }

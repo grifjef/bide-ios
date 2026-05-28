@@ -5,6 +5,7 @@ struct OnboardingView: View {
     @Environment(AppState.self) private var appState
     @Environment(PhotoLibraryService.self) private var photoLibrary
     @Environment(DashboardSummary.self) private var dashboardSummary
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var pageIndex: Int = 0
     @State private var isRequestingPermission: Bool = false
@@ -41,8 +42,14 @@ struct OnboardingView: View {
             VStack(spacing: BideTheme.m) {
                 if pageIndex < 2 {
                     Button {
-                        withAnimation {
+                        // Respect Reduce Motion — the page swap is jarring
+                        // without animation only if you didn't ask for it.
+                        if reduceMotion {
                             pageIndex += 1
+                        } else {
+                            withAnimation {
+                                pageIndex += 1
+                            }
                         }
                     } label: {
                         Text("Continue")

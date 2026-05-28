@@ -13,14 +13,18 @@ enum BideTheme {
     /// Card and module surfaces.
     static let surface = Color(.tertiarySystemBackground)
 
-    /// Primary brand: muted forest green.
-    static let primary = Color(red: 0.36, green: 0.51, blue: 0.42)
+    /// Primary brand: muted forest green. Backed by `Colors/BidePrimary` in
+    /// the asset catalog so light and dark mode each get a tuned value
+    /// (dark mode lifts to maintain WCAG-AA contrast on dark backgrounds).
+    static let primary = Color("Colors/BidePrimary", bundle: .main)
 
-    /// Accent — slate blue. Used for active controls.
-    static let accent = Color(red: 0.32, green: 0.43, blue: 0.58)
+    /// Accent — slate blue. Used for active controls. Asset-catalog backed
+    /// per `Colors/BideAccent`.
+    static let accent = Color("Colors/BideAccent", bundle: .main)
 
     /// Soft warning amber. Used for "this will affect favorites" warnings.
-    static let warning = Color(red: 0.74, green: 0.55, blue: 0.32)
+    /// Asset-catalog backed per `Colors/BideWarning`.
+    static let warning = Color("Colors/BideWarning", bundle: .main)
 
     /// For destructive actions only — used sparingly; we lean on iOS system red.
     static let destructive = Color(.systemRed)

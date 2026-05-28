@@ -1,8 +1,7 @@
-import XCTest
 @testable import Bide
+import XCTest
 
 final class OnThisDayMatcherTests: XCTestCase {
-
     // MARK: - Basic matching
 
     func test_matchesSameDayPriorYear() {

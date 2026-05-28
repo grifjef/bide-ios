@@ -1,7 +1,7 @@
 import Foundation
-import Photos
 import Observation
 import os
+import Photos
 
 /// Lightweight pre-scan that populates the dashboard's module-card headlines
 /// with real counts and reclaimable bytes. Only runs the *cheap* scans —
@@ -14,10 +14,11 @@ import os
 @Observable
 @MainActor
 final class DashboardSummary {
-
     struct LargeVideosCount: Equatable {
         let count: Int
         let totalBytes: Int64
+        // swiftlint:disable:next empty_count
+        var isEmpty: Bool { count == 0 }
         var formattedTotal: String {
             ByteCountFormatter.string(fromByteCount: totalBytes, countStyle: .file)
         }
@@ -26,6 +27,8 @@ final class DashboardSummary {
     struct ScreenRecordingsCount: Equatable {
         let count: Int
         let totalBytes: Int64
+        // swiftlint:disable:next empty_count
+        var isEmpty: Bool { count == 0 }
         var formattedTotal: String {
             ByteCountFormatter.string(fromByteCount: totalBytes, countStyle: .file)
         }
@@ -34,6 +37,8 @@ final class DashboardSummary {
     struct ScreenshotsCount: Equatable {
         let count: Int
         let estimatedBytes: Int64
+        // swiftlint:disable:next empty_count
+        var isEmpty: Bool { count == 0 }
         var formattedTotal: String {
             ByteCountFormatter.string(fromByteCount: estimatedBytes, countStyle: .file)
         }
@@ -43,6 +48,7 @@ final class DashboardSummary {
         let groupCount: Int
         let duplicateCount: Int
         let reclaimableBytes: Int64
+        var isEmpty: Bool { duplicateCount == 0 }
         var formattedReclaim: String {
             ByteCountFormatter.string(fromByteCount: reclaimableBytes, countStyle: .file)
         }
@@ -51,6 +57,8 @@ final class DashboardSummary {
     struct LivePhotosCount: Equatable {
         let count: Int
         let totalBytes: Int64
+        // swiftlint:disable:next empty_count
+        var isEmpty: Bool { count == 0 }
         var formattedTotal: String {
             ByteCountFormatter.string(fromByteCount: totalBytes, countStyle: .file)
         }

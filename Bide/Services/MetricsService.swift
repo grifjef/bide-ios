@@ -18,7 +18,6 @@ import Observation
 @Observable
 @MainActor
 final class MetricsService: NSObject, MXMetricManagerSubscriber {
-
     /// Capped at 30 days — MetricKit itself sends 24 hours of data per
     /// payload, and 30 days is plenty of context for debugging while
     /// keeping disk usage trivial.

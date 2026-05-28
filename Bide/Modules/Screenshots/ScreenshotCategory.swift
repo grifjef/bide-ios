@@ -61,7 +61,6 @@ enum ScreenshotCategory: Int, CaseIterable, Sendable, Identifiable {
 /// the OCR is fast-mode (lossy) so there's noise in the character counts
 /// and we shouldn't reach for surgical boundaries.
 enum OCRClassifier {
-
     /// Threshold below which a screenshot is "visual" (few characters of OCR).
     static let visualMaxChars: Int = 60
 

@@ -1,9 +1,9 @@
 import Foundation
-import Photos
-import Vision
-import UIKit
 import Observation
 import os
+import Photos
+import UIKit
+import Vision
 
 /// Orchestrates the similar-photo scan:
 ///   1. Fetch candidates from PhotoKit
@@ -17,7 +17,6 @@ import os
 @Observable
 @MainActor
 final class SimilarPhotosScanService {
-
     enum ScanState: Equatable {
         case idle
         case scanning(progress: Double, label: String)

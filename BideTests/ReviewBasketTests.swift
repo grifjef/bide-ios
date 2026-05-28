@@ -1,9 +1,8 @@
-import XCTest
 @testable import Bide
+import XCTest
 
 @MainActor
 final class ReviewBasketTests: XCTestCase {
-
     func test_emptyBasket_initialState() {
         let basket = ReviewBasket()
         XCTAssertTrue(basket.isEmpty)

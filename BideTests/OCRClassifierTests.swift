@@ -1,12 +1,11 @@
-import XCTest
-import SwiftData
 @testable import Bide
+import SwiftData
+import XCTest
 
 /// Tests for the pure character-count → category mapping and the round-trip
 /// through `IndexedAssetStore`. We don't invoke Vision here — same Espresso
 /// constraint as the IndexedAssetStore tests.
 final class OCRClassifierTests: XCTestCase {
-
     // MARK: - Pure classification
 
     func test_zeroCharsIsVisual() {

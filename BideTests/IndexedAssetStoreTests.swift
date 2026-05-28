@@ -1,6 +1,6 @@
-import XCTest
-import SwiftData
 @testable import Bide
+import SwiftData
+import XCTest
 
 /// Tests for `IndexedAssetStore` using the Vision-agnostic `Data`-based API.
 /// We use synthetic 32-byte payloads as stand-ins for real feature prints; the
@@ -9,7 +9,6 @@ import SwiftData
 /// is tested separately on-device.
 @MainActor
 final class IndexedAssetStoreTests: XCTestCase {
-
     private var container: ModelContainer!
     private var store: IndexedAssetStore!
 

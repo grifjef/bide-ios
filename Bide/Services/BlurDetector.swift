@@ -1,6 +1,6 @@
+import CoreGraphics
 import Foundation
 import UIKit
-import CoreGraphics
 
 /// Laplacian-variance blur detector. Pure CPU compute on a small grayscale buffer —
 /// no actor isolation, no Vision/Core ML dependency. Tests can call this directly
@@ -20,7 +20,6 @@ import CoreGraphics
 /// destroy trust more than missed blurry shots. Tune up only after testing
 /// against a labeled set of real photos.
 enum BlurDetector {
-
     /// Default threshold below which we consider a photo a "maybe blurry" candidate.
     /// See `analyze(_:)` for the score interpretation.
     static let defaultBlurThreshold: Float = 150.0

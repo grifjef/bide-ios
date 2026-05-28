@@ -7,7 +7,6 @@ import SwiftData
 /// SwiftData.
 @MainActor
 final class ReclaimHistoryStore {
-
     /// Pre-computed aggregate for display.
     struct LifetimeTotals: Equatable {
         let sessionCount: Int

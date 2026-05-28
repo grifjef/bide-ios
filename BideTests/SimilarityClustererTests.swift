@@ -1,8 +1,7 @@
-import XCTest
 @testable import Bide
+import XCTest
 
 final class SimilarityClustererTests: XCTestCase {
-
     // MARK: - Time bucketing
 
     func test_timeBuckets_groupsWithinWindow() {
@@ -21,7 +20,7 @@ final class SimilarityClustererTests: XCTestCase {
     func test_timeBuckets_splitsAcrossWindow() {
         let items = [
             cand(id: "morning", date: at(hour: 9, minute: 0)),
-            cand(id: "noon",    date: at(hour: 12, minute: 0)),
+            cand(id: "noon", date: at(hour: 12, minute: 0)),
             cand(id: "evening", date: at(hour: 18, minute: 0))
         ]
         let buckets = SimilarityClusterer.timeBuckets(items, date: \.creationDate, window: 60 * 60)

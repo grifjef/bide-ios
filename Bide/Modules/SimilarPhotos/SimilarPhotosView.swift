@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct SimilarPhotosView: View {
     @Environment(PhotoLibraryService.self) private var photoLibrary

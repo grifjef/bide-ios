@@ -1,9 +1,8 @@
-import XCTest
 @testable import Bide
+import XCTest
 
 @MainActor
 final class AppStateTests: XCTestCase {
-
     private var defaults: UserDefaults!
 
     override func setUp() {

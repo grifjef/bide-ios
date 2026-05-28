@@ -1,11 +1,10 @@
-import XCTest
 @testable import Bide
+import XCTest
 
 /// Pure tests for the background-refresh planner — no BGTaskScheduler,
 /// no PhotoKit. Pins the "once per night" policy and the access-gated
 /// scheduling behavior.
 final class BackgroundRefreshSchedulerTests: XCTestCase {
-
     private let now = Date(timeIntervalSince1970: 1_700_000_000) // arbitrary fixed
     private let eightHours: TimeInterval = 8 * 60 * 60
 

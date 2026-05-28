@@ -403,7 +403,7 @@ private struct ScreenshotTile: View {
         Button(action: onTap) {
             ZStack(alignment: .topTrailing) {
                 ThumbnailView(localIdentifier: item.localIdentifier)
-                    .aspectRatio(9/19.5, contentMode: .fit)
+                    .aspectRatio(9 / 19.5, contentMode: .fit)
                     .clipShape(RoundedRectangle(cornerRadius: BideTheme.cornerSmall, style: .continuous))
                     .overlay {
                         if isSelected {

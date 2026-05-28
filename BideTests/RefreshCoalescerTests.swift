@@ -1,11 +1,10 @@
-import XCTest
 @testable import Bide
+import XCTest
 
 /// Pure unit tests for the dashboard's refresh-coalescing state machine.
 /// Lives at file scope (no PhotoKit, no MainActor) so the tests run in
 /// the Espresso-free simulator runner without issues.
 final class RefreshCoalescerTests: XCTestCase {
-
     // MARK: - Cold-start
 
     func test_initialState_isIdleAndClean() {

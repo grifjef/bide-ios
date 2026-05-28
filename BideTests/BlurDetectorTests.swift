@@ -1,9 +1,8 @@
-import XCTest
-import UIKit
 @testable import Bide
+import UIKit
+import XCTest
 
 final class BlurDetectorTests: XCTestCase {
-
     // MARK: - laplacianVariance (pure math)
 
     func test_laplacianVariance_uniformImageIsZero() {

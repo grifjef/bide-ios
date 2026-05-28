@@ -1,5 +1,5 @@
-import XCTest
 @testable import Bide
+import XCTest
 
 /// `PhotoLibraryService.fetchPhotoCandidatesStream` is a thin wrapper over
 /// PhotoKit enumeration which we can't drive from unit tests (no real photo
@@ -7,7 +7,6 @@ import XCTest
 /// pattern that the scan services rely on — making sure the shape we build
 /// against is sound.
 final class PhotoCandidatesStreamTests: XCTestCase {
-
     // MARK: - AsyncStream consumption
 
     func test_asyncStream_yieldsAllChunksInOrder() async {

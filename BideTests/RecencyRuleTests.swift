@@ -1,12 +1,11 @@
-import XCTest
 @testable import Bide
+import XCTest
 
 /// Pure tests for `RecencyRule.isRecent` — the shared <30d helper used by
 /// the soft "Recent capture" badge in Large Videos, Screen Recordings, and
 /// Live Photos. Boundary tests pin the inclusive/exclusive ends so a future
 /// off-by-one doesn't quietly mark a 31-day-old asset as recent.
 final class RecencyRuleTests: XCTestCase {
-
     private let now = Date(timeIntervalSince1970: 1_700_000_000) // arbitrary fixed instant
 
     func test_nilDateIsNotRecent() {

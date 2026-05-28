@@ -5,7 +5,7 @@ struct ModuleCard: View {
     let title: String
     let subtitle: String
     var disabled: Bool = false
-    var badge: String? = nil
+    var badge: String?
 
     var body: some View {
         HStack(alignment: .center, spacing: BideTheme.m) {

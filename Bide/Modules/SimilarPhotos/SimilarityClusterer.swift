@@ -18,7 +18,6 @@ import Foundation
 /// units); near-duplicate burst photos land in the 0–8 range, related-but-distinct
 /// shots are 12–25, unrelated images 25+.
 enum SimilarityClusterer {
-
     static let defaultDistanceThreshold: Float = 12.0
     static let defaultTimeWindowSeconds: TimeInterval = 60 * 60 // 1 hour
 
@@ -249,4 +248,3 @@ enum SimilarityClusterer {
         return clusters.sorted { $0.representativeDate > $1.representativeDate }
     }
 }
-

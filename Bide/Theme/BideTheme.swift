@@ -3,7 +3,6 @@ import SwiftUI
 /// Centralized colors, typography, and spacing. Keeping the palette deliberately
 /// muted and a touch sophisticated — Bide is not a candy-bright productivity app.
 enum BideTheme {
-
     // MARK: - Colors
 
     /// Page backgrounds.

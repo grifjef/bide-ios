@@ -7,7 +7,6 @@ import SwiftData
 /// the underlying asset is gone.
 @Model
 final class IndexedAsset {
-
     @Attribute(.unique) var localIdentifier: String
 
     var creationDate: Date?

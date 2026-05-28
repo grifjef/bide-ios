@@ -1,9 +1,8 @@
-import XCTest
 @testable import Bide
+import XCTest
 
 @MainActor
 final class ScreenshotsViewModelTests: XCTestCase {
-
     // MARK: - Grouping
 
     func test_groupByMonth_sortsNewestMonthFirst() {

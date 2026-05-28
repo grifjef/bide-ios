@@ -1,5 +1,5 @@
-import SwiftUI
 import Photos
+import SwiftUI
 
 struct OnboardingView: View {
     @Environment(AppState.self) private var appState

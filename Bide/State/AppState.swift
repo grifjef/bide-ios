@@ -6,7 +6,6 @@ import Observation
 @Observable
 @MainActor
 final class AppState {
-
     enum Phase: Equatable {
         case onboarding
         case ready

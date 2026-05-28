@@ -1,7 +1,6 @@
 import XCTest
 
 final class BideUITests: XCTestCase {
-
     override func setUp() {
         super.setUp()
         continueAfterFailure = false

@@ -8,7 +8,6 @@ import Observation
 @Observable
 @MainActor
 final class ExactDuplicatesScanService {
-
     enum ScanState: Equatable {
         case idle
         case scanning

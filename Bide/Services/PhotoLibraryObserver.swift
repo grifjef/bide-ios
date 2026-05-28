@@ -16,7 +16,6 @@ import Photos
 /// // observer holds the registration until it deinits
 /// ```
 final class PhotoLibraryObserver: NSObject, PHPhotoLibraryChangeObserver, @unchecked Sendable {
-
     private let onChange: @Sendable (PHChange) -> Void
 
     init(_ onChange: @escaping @Sendable (PHChange) -> Void) {

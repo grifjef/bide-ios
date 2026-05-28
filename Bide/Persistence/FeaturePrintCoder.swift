@@ -6,7 +6,6 @@ import Vision
 /// archiver path — no custom serialization, no version-fragile field-by-field
 /// mapping.
 enum FeaturePrintCoder {
-
     /// Serialize a feature-print observation to `Data` suitable for SwiftData storage.
     /// Returns `nil` if the archiver fails (rare — VN classes implement NSSecureCoding
     /// correctly, so failures usually mean memory pressure or a broken object).

@@ -1,8 +1,7 @@
-import XCTest
 @testable import Bide
+import XCTest
 
 final class ExactDuplicateDetectorTests: XCTestCase {
-
     // MARK: - Detection
 
     func test_detect_findsGroupsBySignature() {

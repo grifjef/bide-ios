@@ -6,7 +6,6 @@ import Observation
 @Observable
 @MainActor
 final class ReviewBasket {
-
     enum Source: String, CaseIterable, Sendable {
         case largeVideos
         case screenRecordings

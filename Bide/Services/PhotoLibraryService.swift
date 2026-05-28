@@ -1,6 +1,6 @@
 import Foundation
-import Photos
 import Observation
+import Photos
 import UIKit
 
 /// Wraps PhotoKit. Keeps PhotoKit types contained to a thin layer so the rest
@@ -8,7 +8,6 @@ import UIKit
 @Observable
 @MainActor
 final class PhotoLibraryService {
-
     private(set) var authStatus: PHAuthorizationStatus
 
     init() {
@@ -272,7 +271,7 @@ final class PhotoLibraryService {
 
                 // Enumerate with PhotoKit's lazy iterator — never materializes
                 // the full result array.
-                fetched.enumerateObjects { asset, _, stop in
+                fetched.enumerateObjects { asset, _, _ in
                     guard let creationDate = asset.creationDate else { return }
                     let resources = PHAssetResource.assetResources(for: asset)
                     let size = resources.first.flatMap {

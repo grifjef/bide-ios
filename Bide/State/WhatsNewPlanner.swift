@@ -10,7 +10,6 @@ import Foundation
 /// Tested without UIKit, SwiftUI, or `Bundle.main` so we can pin the
 /// boundaries on the gating logic.
 enum WhatsNewPlanner {
-
     static func shouldShow(
         currentVersion: String,
         lastSeenVersion: String?,

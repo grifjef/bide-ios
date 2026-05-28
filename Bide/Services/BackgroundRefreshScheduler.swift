@@ -9,7 +9,6 @@ import Foundation
 /// Caller wraps this in `BackgroundRefreshService`, which translates the
 /// planner's output into `BGTaskScheduler.shared.submit` calls.
 enum BackgroundRefreshScheduler {
-
     /// Minimum gap between successful refreshes. Pulled from product spec
     /// §17 — we want at most one background scan per night, not throughout
     /// the day, since the value proposition is "open Bide in the morning,

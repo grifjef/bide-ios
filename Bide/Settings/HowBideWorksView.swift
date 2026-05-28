@@ -8,7 +8,6 @@ import SwiftUI
 /// Structure mirrors the dashboard sections so the mental model is the
 /// same surface twice. Copy is brand-on: calm, deliberate, no urgency.
 struct HowBideWorksView: View {
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: BideTheme.l) {

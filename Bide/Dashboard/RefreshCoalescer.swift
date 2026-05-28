@@ -17,7 +17,6 @@ import Foundation
 ///   completeRefresh()         →  .done | .startFollowupRefresh
 /// ```
 struct RefreshCoalescer: Equatable {
-
     /// Outcome of receiving a library-change tick *after the debounce*.
     enum ChangeOutcome: Equatable {
         /// A refresh is already in flight. The coalescer remembered the

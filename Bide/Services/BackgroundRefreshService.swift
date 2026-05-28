@@ -1,5 +1,5 @@
-import Foundation
 import BackgroundTasks
+import Foundation
 import os
 
 /// Wires Bide to `BGTaskScheduler` so the dashboard pre-scan can run
@@ -21,7 +21,6 @@ import os
 ///   that's expected and the foreground refresh path covers any gap.
 @MainActor
 final class BackgroundRefreshService {
-
     /// Reverse-DNS task identifier. Must match the entry in the app's
     /// `BGTaskSchedulerPermittedIdentifiers` Info.plist key.
     static let taskIdentifier = "com.bidephoto.bide.dashboardRefresh"

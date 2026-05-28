@@ -11,7 +11,6 @@ import Vision
 /// All work happens off the main actor. Callers await results and hop back to
 /// `@MainActor` themselves if they need to update UI.
 struct VisionService: Sendable {
-
     /// The version of the feature print model we computed against. If Apple
     /// updates the model in a future iOS, we re-cluster from scratch rather
     /// than mixing prints across versions.

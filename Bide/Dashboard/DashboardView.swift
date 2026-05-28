@@ -1,5 +1,5 @@
-import SwiftUI
 import Photos
+import SwiftUI
 
 struct DashboardView: View {
     @Environment(PhotoLibraryService.self) private var photoLibrary
@@ -149,7 +149,7 @@ struct DashboardView: View {
 
     private var largeVideosSubtitle: String {
         if let s = summary.largeVideos {
-            if s.count == 0 {
+            if s.isEmpty {
                 return "No large videos found."
             }
             return "\(s.count) video\(s.count == 1 ? "" : "s") · \(s.formattedTotal)"
@@ -159,7 +159,7 @@ struct DashboardView: View {
 
     private var screenRecordingsSubtitle: String {
         if let s = summary.screenRecordings {
-            if s.count == 0 {
+            if s.isEmpty {
                 return "No screen recordings found."
             }
             return "\(s.count) recording\(s.count == 1 ? "" : "s") · \(s.formattedTotal)"
@@ -169,7 +169,7 @@ struct DashboardView: View {
 
     private var screenshotsSubtitle: String {
         if let s = summary.screenshots {
-            if s.count == 0 {
+            if s.isEmpty {
                 return "No screenshots found."
             }
             return "\(s.count) screenshot\(s.count == 1 ? "" : "s") · ~\(s.formattedTotal)"
@@ -343,7 +343,7 @@ struct DashboardView: View {
 
     private var livePhotosSubtitle: String {
         if let s = summary.livePhotos {
-            if s.count == 0 {
+            if s.isEmpty {
                 return "No Live Photos found."
             }
             return "\(s.count) Live Photo\(s.count == 1 ? "" : "s") · \(s.formattedTotal)"

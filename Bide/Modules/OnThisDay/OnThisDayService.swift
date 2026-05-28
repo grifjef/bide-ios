@@ -7,7 +7,6 @@ import Observation
 @Observable
 @MainActor
 final class OnThisDayService {
-
     enum LoadState: Equatable {
         case idle
         case loading

@@ -1,5 +1,5 @@
-import SwiftUI
 import Photos
+import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss

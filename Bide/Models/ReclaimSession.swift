@@ -5,7 +5,6 @@ import SwiftData
 /// is just the sum of these rows — no separate counter to drift out of sync.
 @Model
 final class ReclaimSession {
-
     /// Wall-clock time the user confirmed deletion.
     var completedAt: Date
 

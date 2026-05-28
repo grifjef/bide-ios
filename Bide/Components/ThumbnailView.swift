@@ -11,7 +11,7 @@ import SwiftUI
 /// authorize the network fetch for that specific asset.
 struct ThumbnailView: View {
     let localIdentifier: String
-    var targetSize: CGSize = CGSize(width: 220, height: 220)
+    var targetSize = CGSize(width: 220, height: 220)
 
     @Environment(PhotoLibraryService.self) private var photoLibrary
 

@@ -1,10 +1,9 @@
-import XCTest
-import SwiftData
 @testable import Bide
+import SwiftData
+import XCTest
 
 @MainActor
 final class ReclaimHistoryStoreTests: XCTestCase {
-
     private var container: ModelContainer!
     private var store: ReclaimHistoryStore!
 

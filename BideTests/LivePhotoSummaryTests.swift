@@ -1,12 +1,11 @@
-import XCTest
 @testable import Bide
+import XCTest
 
 /// Tests the pure derived properties on `LivePhotoSummary` that drive the
 /// "Convert to still" UI copy and accessibility labels. We can't run the
 /// PhotoKit-backed conversion in tests, but we can pin down the math the UI
 /// shows the user.
 final class LivePhotoSummaryTests: XCTestCase {
-
     private func make(
         fileSize: Int64,
         pairedVideoSize: Int64,

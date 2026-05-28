@@ -8,7 +8,6 @@ import os
 /// This is dramatically faster than feature-print similarity clustering —
 /// no Vision, no thumbnails, just a single dictionary pass.
 enum ExactDuplicateDetector {
-
     /// Returns groups of size ≥ 2, sorted by total reclaimable bytes descending
     /// (most space-saving groups first).
     static func detect(_ candidates: [SimilarPhotoCandidate]) -> [ExactDuplicateGroup] {

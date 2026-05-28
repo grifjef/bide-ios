@@ -1,6 +1,6 @@
-import SwiftUI
 import Photos
 import PhotosUI
+import SwiftUI
 import UIKit
 
 /// Banner shown on the dashboard when the user granted Limited Library Access
@@ -10,7 +10,6 @@ import UIKit
 /// know that scans will be partial, and we offer a one-tap shortcut to expand
 /// the selection via the system picker.
 struct LimitedLibraryBanner: View {
-
     var body: some View {
         VStack(alignment: .leading, spacing: BideTheme.s) {
             HStack(spacing: BideTheme.s) {

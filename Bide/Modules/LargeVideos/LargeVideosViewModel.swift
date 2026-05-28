@@ -4,7 +4,6 @@ import Observation
 @Observable
 @MainActor
 final class LargeVideosViewModel {
-
     enum LoadState: Equatable {
         case idle
         case loading

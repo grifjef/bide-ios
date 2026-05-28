@@ -1,8 +1,7 @@
-import XCTest
 @testable import Bide
+import XCTest
 
 final class PhotoLibraryEstimatorTests: XCTestCase {
-
     // MARK: - estimatedVideoBytes
 
     func test_estimate_4kVideoHas4KTier() {

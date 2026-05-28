@@ -1,7 +1,7 @@
 import Foundation
+import Observation
 import Photos
 import UIKit
-import Observation
 
 /// Orchestrates the blurry-shots scan:
 ///   1. Fetch all photo candidates from PhotoKit (same source as Similar Photos)
@@ -14,7 +14,6 @@ import Observation
 @Observable
 @MainActor
 final class BlurryShotsScanService {
-
     enum ScanState: Equatable {
         case idle
         case scanning(progress: Double, label: String)

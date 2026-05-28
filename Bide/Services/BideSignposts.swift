@@ -15,7 +15,6 @@ import os
 /// The subsystem matches the bundle ID so the signposts are easy to
 /// filter in `log stream --subsystem com.bidephoto.bide`.
 enum BideSignposts {
-
     static let subsystem = "com.bidephoto.bide"
 
     static let scansLog = OSLog(subsystem: subsystem, category: "scans")

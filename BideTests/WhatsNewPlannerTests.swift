@@ -1,11 +1,10 @@
-import XCTest
 @testable import Bide
+import XCTest
 
 /// Pure tests for the "What's new" gate. Pins the three rules:
 /// onboarding-state respect, fresh-install suppression, and the
 /// version-mismatch trigger.
 final class WhatsNewPlannerTests: XCTestCase {
-
     // MARK: - Onboarding gate
 
     func test_doesNotShowDuringOnboarding_evenWithVersionMismatch() {

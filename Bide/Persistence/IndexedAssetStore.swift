@@ -17,7 +17,6 @@ import Vision
 /// longer in the present set. Called at the start of each scan.
 @MainActor
 final class IndexedAssetStore {
-
     private let modelContext: ModelContext
 
     init(modelContext: ModelContext) {

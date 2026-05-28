@@ -8,7 +8,6 @@ import Foundation
 /// Pulled into its own type so the date math is fully testable without any
 /// PhotoKit dependency. The OnThisDayService just calls this.
 enum OnThisDayMatcher {
-
     /// Items from past years that match the target month + day.
     struct YearGroup: Identifiable, Equatable {
         let id: Int           // year (e.g. 2024)

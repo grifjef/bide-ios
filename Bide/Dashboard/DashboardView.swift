@@ -22,6 +22,20 @@ struct DashboardView: View {
                     // Module cards
                     VStack(spacing: BideTheme.m) {
                         NavigationLink {
+                            ExactDuplicatesView()
+                        } label: {
+                            ModuleCard(
+                                icon: "doc.on.doc.fill",
+                                title: "Exact duplicates",
+                                subtitle: "Byte-for-byte identical copies. Fast and safe.",
+                                disabled: !photoLibrary.hasReadAccess,
+                                badge: "Beta"
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!photoLibrary.hasReadAccess)
+
+                        NavigationLink {
                             LargeVideosView()
                         } label: {
                             ModuleCard(

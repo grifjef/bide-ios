@@ -29,7 +29,36 @@ struct SimilarPhotosView: View {
             }
             scanService?.startScanIfNeeded()
         }
+        .task(id: scanService?.clusters.count) {
+            // Re-run prewarm whenever the cluster list changes so scrolling
+            // through results is smooth — clusters can shrink mid-review as
+            // the library observer drops keeper-deleted ones.
+            guard let identifiers = visibleClusterIdentifiers, !identifiers.isEmpty else { return }
+            photoLibrary.startPrewarmingThumbnails(
+                for: identifiers,
+                targetSize: Self.clusterThumbnailSize
+            )
+        }
+        .onDisappear {
+            if let identifiers = visibleClusterIdentifiers, !identifiers.isEmpty {
+                photoLibrary.stopPrewarmingThumbnails(
+                    for: identifiers,
+                    targetSize: Self.clusterThumbnailSize
+                )
+            }
+        }
     }
+
+    /// Flat identifier list across every cluster currently visible. Nil
+    /// when the scan hasn't produced clusters yet — caller skips prewarming.
+    private var visibleClusterIdentifiers: [String]? {
+        guard let scan = scanService, !scan.clusters.isEmpty else { return nil }
+        return scan.clusters.flatMap { $0.candidates.map(\.localIdentifier) }
+    }
+
+    /// Target thumbnail size shared between the cluster row and the prewarm
+    /// call so cache keys match.
+    private static let clusterThumbnailSize = CGSize(width: 220, height: 220)
 
     @ViewBuilder
     private func content(for scan: SimilarPhotosScanService) -> some View {

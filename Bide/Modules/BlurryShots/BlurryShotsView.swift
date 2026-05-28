@@ -23,7 +23,32 @@ struct BlurryShotsView: View {
             }
             scan?.startScanIfNeeded()
         }
+        .task(id: scan?.candidates.count) {
+            // Prewarm thumbnails whenever the candidate set changes (after
+            // scan completes, or shrinks due to library observer). Cheap
+            // when identifiers haven't actually moved.
+            guard let identifiers = candidateIdentifiers, !identifiers.isEmpty else { return }
+            photoLibrary.startPrewarmingThumbnails(
+                for: identifiers,
+                targetSize: Self.candidateThumbnailSize
+            )
+        }
+        .onDisappear {
+            if let identifiers = candidateIdentifiers, !identifiers.isEmpty {
+                photoLibrary.stopPrewarmingThumbnails(
+                    for: identifiers,
+                    targetSize: Self.candidateThumbnailSize
+                )
+            }
+        }
     }
+
+    private var candidateIdentifiers: [String]? {
+        guard let scan, !scan.candidates.isEmpty else { return nil }
+        return scan.candidates.map(\.localIdentifier)
+    }
+
+    private static let candidateThumbnailSize = CGSize(width: 220, height: 220)
 
     @ViewBuilder
     private func content(for scan: BlurryShotsScanService) -> some View {

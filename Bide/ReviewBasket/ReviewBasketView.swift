@@ -4,6 +4,7 @@ struct ReviewBasketView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(ReviewBasket.self) private var basket
     @Environment(PhotoLibraryService.self) private var photoLibrary
+    @Environment(\.modelContext) private var modelContext
 
     @State private var isConfirming = false
     @State private var isDeleting = false
@@ -15,6 +16,7 @@ struct ReviewBasketView: View {
         let count: Int
         let bytes: Int64
         let completedAt: Date
+        let lifetime: ReclaimHistoryStore.LifetimeTotals?
 
         var formattedBytes: String {
             ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
@@ -172,10 +174,19 @@ struct ReviewBasketView: View {
         do {
             try await photoLibrary.delete(identifiers: toDelete)
             basket.clear()
+
+            // Persist this session in the lifetime reclaim history. Best-effort:
+            // if the write fails we still show the completion screen (the user
+            // already lost their basket; better UX to celebrate the cleanup).
+            let store = ReclaimHistoryStore(modelContext: modelContext)
+            _ = try? store.record(itemCount: count, bytesReclaimed: totalBytes)
+            let lifetime = try? store.lifetimeTotals()
+
             summarySession = CompletionSummary(
                 count: count,
                 bytes: totalBytes,
-                completedAt: Date()
+                completedAt: Date(),
+                lifetime: lifetime
             )
         } catch {
             // PhotoKit throws if the user denies the system confirmation sheet.

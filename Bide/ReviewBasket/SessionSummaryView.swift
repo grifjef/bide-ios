@@ -29,6 +29,14 @@ struct SessionSummaryView: View {
                     .font(BideTheme.cardTitle())
                     .foregroundStyle(BideTheme.textSecondary)
                     .multilineTextAlignment(.center)
+
+                if let lifetime = session.lifetime, lifetime.sessionCount > 1 {
+                    Text(lifetimeBlurb(lifetime))
+                        .font(BideTheme.caption())
+                        .foregroundStyle(BideTheme.primary)
+                        .multilineTextAlignment(.center)
+                        .padding(.top, BideTheme.s)
+                }
             }
 
             VStack(alignment: .leading, spacing: BideTheme.m) {
@@ -80,6 +88,13 @@ struct SessionSummaryView: View {
         .accessibilityLabel("\(session.count) items moved to Recently Deleted. Freed \(session.formattedBytes). 30 days to restore from Photos if needed.")
     }
 
+    /// Plain-English summary of lifetime reclaim. We avoid percentages and
+    /// gamification — just the count of sessions and total bytes cleared,
+    /// stated as fact.
+    private func lifetimeBlurb(_ lifetime: ReclaimHistoryStore.LifetimeTotals) -> String {
+        "You've cleared \(lifetime.formattedBytes) across \(lifetime.sessionCount) sessions with Bide."
+    }
+
     /// Open the Recently Deleted album in Photos.app. The standard photos-redirect
     /// URL scheme launches Photos and lands on the user's library — they need to
     /// tap into the album themselves. (Apple does not currently expose a direct
@@ -93,7 +108,12 @@ struct SessionSummaryView: View {
 
 #Preview {
     SessionSummaryView(
-        session: .init(count: 47, bytes: 1_240_000_000, completedAt: Date()),
+        session: .init(
+            count: 47,
+            bytes: 1_240_000_000,
+            completedAt: Date(),
+            lifetime: .init(sessionCount: 8, itemCount: 312, bytes: 18_400_000_000, firstSessionAt: Date().addingTimeInterval(-60 * 60 * 24 * 90))
+        ),
         onDone: {}
     )
 }

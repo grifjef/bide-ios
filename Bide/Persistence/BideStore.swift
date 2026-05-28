@@ -8,7 +8,8 @@ enum BideStore {
     @MainActor
     static func makeContainer(inMemory: Bool = false) -> ModelContainer {
         let schema = Schema([
-            IndexedAsset.self
+            IndexedAsset.self,
+            ReclaimSession.self
         ])
         let configuration = ModelConfiguration(
             schema: schema,

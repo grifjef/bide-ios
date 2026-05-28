@@ -4,6 +4,7 @@ import Photos
 struct OnboardingView: View {
     @Environment(AppState.self) private var appState
     @Environment(PhotoLibraryService.self) private var photoLibrary
+    @Environment(DashboardSummary.self) private var dashboardSummary
 
     @State private var pageIndex: Int = 0
     @State private var isRequestingPermission: Bool = false
@@ -90,6 +91,16 @@ struct OnboardingView: View {
         defer { isRequestingPermission = false }
 
         let status = await photoLibrary.requestAuthorization()
+
+        // Kick off the dashboard pre-scan the instant we have read access.
+        // The scan happens off-main; by the time the user lands on the
+        // dashboard a moment later, the module-card subtitles are populated
+        // with real counts and reclaim numbers instead of placeholder copy.
+        // No-op if denied/restricted.
+        if status == .authorized || status == .limited {
+            dashboardSummary.refreshIfNeeded()
+        }
+
         // We move forward regardless — if the user denied, the dashboard will
         // show a helpful "permission needed" state and offer Settings.
         switch status {
@@ -133,7 +144,9 @@ private struct IntroPage: View {
 }
 
 #Preview {
-    OnboardingView()
+    let library = PhotoLibraryService()
+    return OnboardingView()
         .environment(AppState())
-        .environment(PhotoLibraryService())
+        .environment(library)
+        .environment(DashboardSummary(photoLibrary: library))
 }

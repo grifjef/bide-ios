@@ -4,10 +4,24 @@ import Photos
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(PhotoLibraryService.self) private var photoLibrary
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var lifetime: ReclaimHistoryStore.LifetimeTotals = .zero
 
     var body: some View {
         NavigationStack {
             List {
+                if lifetime.sessionCount > 0 {
+                    Section {
+                        lifetimeRow
+                    } header: {
+                        Text("Lifetime with Bide")
+                    } footer: {
+                        Text("Your own number, never transmitted anywhere.")
+                            .font(BideTheme.caption())
+                    }
+                }
+
                 Section {
                     privacyPromise
                 } header: {
@@ -46,7 +60,27 @@ struct SettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
+            .task {
+                let store = ReclaimHistoryStore(modelContext: modelContext)
+                if let totals = try? store.lifetimeTotals() {
+                    lifetime = totals
+                }
+            }
         }
+    }
+
+    private var lifetimeRow: some View {
+        VStack(alignment: .leading, spacing: BideTheme.s) {
+            Text(lifetime.formattedBytes)
+                .font(BideTheme.display())
+                .foregroundStyle(BideTheme.primary)
+            Text("Reclaimed across \(lifetime.sessionCount) session\(lifetime.sessionCount == 1 ? "" : "s")")
+                .font(BideTheme.cardTitle())
+            Text("\(lifetime.itemCount) item\(lifetime.itemCount == 1 ? "" : "s") moved to Recently Deleted in total.")
+                .font(BideTheme.caption())
+                .foregroundStyle(BideTheme.textSecondary)
+        }
+        .padding(.vertical, BideTheme.xs)
     }
 
     private var privacyPromise: some View {

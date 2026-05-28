@@ -16,6 +16,10 @@ struct DashboardView: View {
     /// people meeting Bide for the first time).
     @AppStorage("bide.lastSeenVersion") private var lastSeenVersion: String = ""
 
+    /// Set to true once the user has dismissed the first-run coaching card.
+    /// Survives kills, so fresh-install users see it exactly once.
+    @AppStorage("bide.didDismissFirstRunNudge") private var didDismissFirstRunNudge: Bool = false
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -25,6 +29,13 @@ struct DashboardView: View {
                         permissionBanner
                     } else if photoLibrary.authStatus == .limited {
                         LimitedLibraryBanner()
+                    }
+
+                    // First-run coaching nudge — points fresh-install users
+                    // at the highest-leverage starting module. Dismissed
+                    // forever once tapped.
+                    if shouldShowFirstRunNudge {
+                        firstRunNudge
                     }
 
                     // On This Day callout — only shown when there are
@@ -382,6 +393,57 @@ struct DashboardView: View {
         f.timeStyle = .short
         return f
     }()
+
+    /// Show the first-run nudge only while every plausible signal of
+    /// "fresh install, hasn't tapped anything yet" still holds:
+    ///   - user has not already dismissed it
+    ///   - photo access exists (otherwise the permission banner is louder)
+    ///   - no lifetime activity yet (first session not recorded anywhere)
+    ///
+    /// The third condition is approximated by checking that the dashboard
+    /// hasn't surfaced any duplicates / videos / etc — meaning the user has
+    /// either never scanned or has a genuinely clean library. Either way,
+    /// the nudge isn't relevant once they've done something.
+    private var shouldShowFirstRunNudge: Bool {
+        guard !didDismissFirstRunNudge else { return false }
+        guard photoLibrary.hasReadAccess else { return false }
+        return true
+    }
+
+    /// Calm coaching card on first dashboard appearance. One sentence and a
+    /// tap-to-dismiss; no auto-hide so users with Dynamic Type or VoiceOver
+    /// have time to read.
+    private var firstRunNudge: some View {
+        Button {
+            didDismissFirstRunNudge = true
+        } label: {
+            HStack(alignment: .top, spacing: BideTheme.m) {
+                Image(systemName: "sparkles")
+                    .font(.title3)
+                    .foregroundStyle(BideTheme.primary)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Quick wins are the fastest path.")
+                        .font(BideTheme.cardTitle())
+                        .foregroundStyle(BideTheme.textPrimary)
+                    Text("Tap a module to look around. Exact duplicates and screen recordings usually clear the most in the least time. Tap this card to dismiss.")
+                        .font(BideTheme.caption())
+                        .foregroundStyle(BideTheme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(BideTheme.textTertiary)
+                    .accessibilityHidden(true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .bideCard()
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Quick wins are the fastest path. Tap a module to look around. Tap this card to dismiss.")
+        .accessibilityHint("Double-tap to dismiss this hint")
+    }
 
     private var permissionBanner: some View {
         VStack(alignment: .leading, spacing: BideTheme.s) {

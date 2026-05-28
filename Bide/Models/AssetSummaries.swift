@@ -12,6 +12,7 @@ struct LargeVideoSummary: Identifiable, Hashable, Sendable {
     let isFavorite: Bool
     let isHidden: Bool
     let sourceTypeIsCamera: Bool
+    let isScreenRecording: Bool
 
     var id: String { localIdentifier }
 

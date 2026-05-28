@@ -22,6 +22,14 @@ final class DashboardSummary {
         }
     }
 
+    struct ScreenRecordingsCount: Equatable {
+        let count: Int
+        let totalBytes: Int64
+        var formattedTotal: String {
+            ByteCountFormatter.string(fromByteCount: totalBytes, countStyle: .file)
+        }
+    }
+
     struct ScreenshotsCount: Equatable {
         let count: Int
         let estimatedBytes: Int64
@@ -40,6 +48,7 @@ final class DashboardSummary {
     }
 
     private(set) var largeVideos: LargeVideosCount?
+    private(set) var screenRecordings: ScreenRecordingsCount?
     private(set) var screenshots: ScreenshotsCount?
     private(set) var duplicates: DuplicatesCount?
     private(set) var isRefreshing: Bool = false
@@ -64,6 +73,7 @@ final class DashboardSummary {
             guard let self else { return }
             await withTaskGroup(of: Void.self) { group in
                 group.addTask { await self.refreshLargeVideos(photoLibrary: photoLibrary) }
+                group.addTask { await self.refreshScreenRecordings(photoLibrary: photoLibrary) }
                 group.addTask { await self.refreshScreenshots(photoLibrary: photoLibrary) }
                 group.addTask { await self.refreshDuplicates(photoLibrary: photoLibrary) }
             }
@@ -86,6 +96,13 @@ final class DashboardSummary {
         let actionable = videos.filter { $0.fileSize > 100_000_000 }
         let total = actionable.reduce(Int64(0)) { $0 + $1.fileSize }
         largeVideos = LargeVideosCount(count: actionable.count, totalBytes: total)
+    }
+
+    private func refreshScreenRecordings(photoLibrary: PhotoLibraryService) async {
+        let recordings = await photoLibrary.fetchScreenRecordings(limit: 200)
+        // Show everything — screen recordings are usually disposable regardless of size
+        let total = recordings.reduce(Int64(0)) { $0 + $1.fileSize }
+        screenRecordings = ScreenRecordingsCount(count: recordings.count, totalBytes: total)
     }
 
     private func refreshScreenshots(photoLibrary: PhotoLibraryService) async {

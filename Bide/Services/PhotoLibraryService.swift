@@ -74,7 +74,9 @@ final class PhotoLibraryService {
 
             let fetched = PHAsset.fetchAssets(with: options)
 
-            // Pass 1: cheap enumeration with size estimate
+            // Pass 1: cheap enumeration with size estimate.
+            // Screen recordings get their own module — keep them out of Large Videos
+            // so the user has a clear mental model for which list contains what.
             struct PreliminaryRow {
                 let asset: PHAsset
                 let estimate: Int64
@@ -82,6 +84,7 @@ final class PhotoLibraryService {
             var prelim: [PreliminaryRow] = []
             prelim.reserveCapacity(fetched.count)
             fetched.enumerateObjects { asset, _, _ in
+                guard !asset.mediaSubtypes.contains(.videoScreenRecording) else { return }
                 let estimate = Self.estimatedVideoBytes(
                     pixelWidth: asset.pixelWidth,
                     pixelHeight: asset.pixelHeight,
@@ -112,12 +115,77 @@ final class PhotoLibraryService {
                         fileSize: bytes,
                         isFavorite: asset.isFavorite,
                         isHidden: asset.isHidden,
-                        sourceTypeIsCamera: asset.sourceType == .typeUserLibrary
+                        sourceTypeIsCamera: asset.sourceType == .typeUserLibrary,
+                        isScreenRecording: false
                     )
                 )
             }
 
             // Real sizes may shuffle the order slightly vs. estimate-sort
+            return summaries.sorted { $0.fileSize > $1.fileSize }
+        }.value
+    }
+
+    /// Fetch screen-recording video assets sorted by file size descending.
+    /// Mirrors `fetchLargeVideos` exactly, but with the inverse media-subtype
+    /// filter. Screen recordings tend to be much larger than camera videos so
+    /// they're worth surfacing as their own module.
+    func fetchScreenRecordings(limit: Int = 200) async -> [LargeVideoSummary] {
+        await Task.detached(priority: .userInitiated) {
+            let options = PHFetchOptions()
+            options.predicate = NSPredicate(
+                format: "mediaType == %d AND (mediaSubtypes & %d) != 0",
+                PHAssetMediaType.video.rawValue,
+                PHAssetMediaSubtype.videoScreenRecording.rawValue
+            )
+            options.sortDescriptors = [
+                NSSortDescriptor(key: "creationDate", ascending: false)
+            ]
+
+            let fetched = PHAsset.fetchAssets(with: options)
+
+            struct PreliminaryRow {
+                let asset: PHAsset
+                let estimate: Int64
+            }
+            var prelim: [PreliminaryRow] = []
+            prelim.reserveCapacity(fetched.count)
+            fetched.enumerateObjects { asset, _, _ in
+                let estimate = Self.estimatedVideoBytes(
+                    pixelWidth: asset.pixelWidth,
+                    pixelHeight: asset.pixelHeight,
+                    duration: asset.duration
+                )
+                prelim.append(PreliminaryRow(asset: asset, estimate: estimate))
+            }
+
+            let topCandidates = prelim
+                .sorted { $0.estimate > $1.estimate }
+                .prefix(limit)
+
+            var summaries: [LargeVideoSummary] = []
+            summaries.reserveCapacity(topCandidates.count)
+            for row in topCandidates {
+                let asset = row.asset
+                let realSize = Self.fileSize(of: asset)
+                let bytes = realSize > 0 ? realSize : row.estimate
+
+                summaries.append(
+                    LargeVideoSummary(
+                        localIdentifier: asset.localIdentifier,
+                        creationDate: asset.creationDate,
+                        duration: asset.duration,
+                        pixelWidth: asset.pixelWidth,
+                        pixelHeight: asset.pixelHeight,
+                        fileSize: bytes,
+                        isFavorite: asset.isFavorite,
+                        isHidden: asset.isHidden,
+                        sourceTypeIsCamera: asset.sourceType == .typeUserLibrary,
+                        isScreenRecording: true
+                    )
+                )
+            }
+
             return summaries.sorted { $0.fileSize > $1.fileSize }
         }.value
     }

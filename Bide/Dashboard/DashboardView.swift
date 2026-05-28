@@ -37,6 +37,20 @@ struct DashboardView: View {
                         .disabled(!photoLibrary.hasReadAccess)
 
                         NavigationLink {
+                            ScreenRecordingsView()
+                        } label: {
+                            ModuleCard(
+                                icon: "record.circle.fill",
+                                title: "Screen recordings",
+                                subtitle: screenRecordingsSubtitle,
+                                disabled: !photoLibrary.hasReadAccess,
+                                badge: "Beta"
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!photoLibrary.hasReadAccess)
+
+                        NavigationLink {
                             LargeVideosView()
                         } label: {
                             ModuleCard(
@@ -151,6 +165,16 @@ struct DashboardView: View {
             return "\(s.count) video\(s.count == 1 ? "" : "s") · \(s.formattedTotal)"
         }
         return "Find the biggest files first."
+    }
+
+    private var screenRecordingsSubtitle: String {
+        if let s = summary.screenRecordings {
+            if s.count == 0 {
+                return "No screen recordings found."
+            }
+            return "\(s.count) recording\(s.count == 1 ? "" : "s") · \(s.formattedTotal)"
+        }
+        return "One-time-use captures, easy to clear."
     }
 
     private var screenshotsSubtitle: String {

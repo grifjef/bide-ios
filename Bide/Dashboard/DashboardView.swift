@@ -35,6 +35,8 @@ struct DashboardView: View {
                     quickWinsSection
                     cleanupSection
                     memoryReviewSection
+
+                    freshnessPill
                 }
                 .padding(BideTheme.m)
             }
@@ -291,6 +293,49 @@ struct DashboardView: View {
         }
         return "Stills with a short video sidecar."
     }
+
+    /// Subtle pill at the bottom of the dashboard reporting scan freshness.
+    /// Shows "Refreshing…" while a scan is in flight (including the auto-
+    /// triggered post-library-change scan) and "Updated N min ago" when
+    /// quiet. Designed to be reassuring without being noisy — small font,
+    /// muted color, no animation. Hidden entirely when there's nothing to
+    /// say (pre-scan).
+    @ViewBuilder
+    private var freshnessPill: some View {
+        if summary.isRefreshing {
+            HStack(spacing: BideTheme.xs) {
+                ProgressView().controlSize(.mini)
+                Text("Refreshing scans…")
+                    .font(BideTheme.caption())
+                    .foregroundStyle(BideTheme.textTertiary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, BideTheme.s)
+            .accessibilityLabel("Bide is refreshing the dashboard scans.")
+        } else if let at = summary.lastRefreshAt {
+            Text("Updated \(Self.freshnessFormatter.localizedString(for: at, relativeTo: Date()))")
+                .font(BideTheme.caption())
+                .foregroundStyle(BideTheme.textTertiary)
+                .frame(maxWidth: .infinity)
+                .padding(.top, BideTheme.s)
+                .accessibilityLabel("Dashboard last updated \(Self.accessibleFormatter.string(from: at)).")
+        } else {
+            EmptyView()
+        }
+    }
+
+    private static let freshnessFormatter: RelativeDateTimeFormatter = {
+        let f = RelativeDateTimeFormatter()
+        f.unitsStyle = .short
+        return f
+    }()
+
+    private static let accessibleFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .none
+        f.timeStyle = .short
+        return f
+    }()
 
     private var permissionBanner: some View {
         VStack(alignment: .leading, spacing: BideTheme.s) {

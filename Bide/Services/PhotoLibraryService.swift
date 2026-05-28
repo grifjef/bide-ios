@@ -418,6 +418,16 @@ final class PhotoLibraryService {
 
     // MARK: - Thumbnails
 
+    /// Outcome of a thumbnail request, with enough metadata for the UI to
+    /// distinguish "nothing here" from "in iCloud, not downloaded yet".
+    struct ThumbnailResult: Sendable {
+        let image: UIImage?
+        /// True when PhotoKit reports the asset has cloud-only resources and
+        /// we couldn't fulfill the request without network. UI can render a
+        /// "tap to download" affordance.
+        let isCloudOnly: Bool
+    }
+
     /// Request a thumbnail. `isNetworkAccessAllowed` defaults to `false` so we
     /// never silently download iCloud assets in the background. Returns `nil`
     /// for cloud-only assets — callers should handle that gracefully.
@@ -426,12 +436,69 @@ final class PhotoLibraryService {
         targetSize: CGSize,
         contentMode: PHImageContentMode = .aspectFill
     ) async -> UIImage? {
+        await requestThumbnailWithMetadata(
+            for: identifier,
+            targetSize: targetSize,
+            contentMode: contentMode
+        ).image
+    }
+
+    /// Same as `requestThumbnail` but also reports whether the failure (if any)
+    /// is because the asset is in iCloud and not downloaded. Used by
+    /// `ThumbnailView` to choose between the generic placeholder and the
+    /// download-affordance state.
+    nonisolated func requestThumbnailWithMetadata(
+        for identifier: String,
+        targetSize: CGSize,
+        contentMode: PHImageContentMode = .aspectFill
+    ) async -> ThumbnailResult {
         let assets = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil)
-        guard let asset = assets.firstObject else { return nil }
+        guard let asset = assets.firstObject else {
+            return ThumbnailResult(image: nil, isCloudOnly: false)
+        }
 
         let options = PHImageRequestOptions()
         options.deliveryMode = .opportunistic
         options.isNetworkAccessAllowed = false
+        options.isSynchronous = false
+        options.resizeMode = .fast
+
+        return await withCheckedContinuation { (continuation: CheckedContinuation<ThumbnailResult, Never>) in
+            var resumed = false
+            PHImageManager.default().requestImage(
+                for: asset,
+                targetSize: targetSize,
+                contentMode: contentMode,
+                options: options
+            ) { image, info in
+                let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
+                if !isDegraded && !resumed {
+                    resumed = true
+                    let isCloudOnly = (info?[PHImageResultIsInCloudKey] as? Bool) ?? false
+                    continuation.resume(returning: ThumbnailResult(
+                        image: image,
+                        isCloudOnly: image == nil && isCloudOnly
+                    ))
+                }
+            }
+        }
+    }
+
+    /// Request a thumbnail with iCloud download permitted. Use **only** on
+    /// explicit user action (tap-to-load), never as a default — silent
+    /// downloads burn the user's cellular data and battery and violate the
+    /// "no hidden cloud" promise.
+    nonisolated func requestThumbnailAllowingDownload(
+        for identifier: String,
+        targetSize: CGSize,
+        contentMode: PHImageContentMode = .aspectFill
+    ) async -> UIImage? {
+        let assets = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil)
+        guard let asset = assets.firstObject else { return nil }
+
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .highQualityFormat
+        options.isNetworkAccessAllowed = true
         options.isSynchronous = false
         options.resizeMode = .fast
 
@@ -443,8 +510,6 @@ final class PhotoLibraryService {
                 contentMode: contentMode,
                 options: options
             ) { image, info in
-                // Opportunistic delivery can call us twice (low-res, then high-res).
-                // We only want the final one; check the degraded flag.
                 let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
                 if !isDegraded && !resumed {
                     resumed = true

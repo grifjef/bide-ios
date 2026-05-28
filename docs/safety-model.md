@@ -59,11 +59,11 @@ Rationale (per spec §14): users often clear screenshots / blurry shots from the
 
 ## Deletion mechanics
 
-All four modules feed into a single `ReviewBasket`. The basket persists in memory for the session and shows the count + estimated reclaimable bytes at the bottom of the dashboard.
+Every module feeds into a single `ReviewBasket`. The basket persists in memory for the session and shows the count + estimated reclaimable bytes at the bottom of the dashboard.
 
 Tap "Review basket" → `ReviewBasketView`:
 
-1. The user sees every item they've added, grouped by source (Large Videos, Screenshots, Similar, Blurry).
+1. The user sees every item they've added, grouped by `ReviewBasket.Source` — Large videos, Screen recordings, Screenshots, Live Photos, Similar photos, Blurry shots, Exact duplicates, On this day. Each module writes to its own source enum case so the basket groups items accurately by where they came from.
 2. Any item can be removed from the basket with a minus-circle button.
 3. The "Cancel basket" link clears everything and dismisses.
 4. The primary action is "Move to Recently Deleted" — this is what we call it everywhere. Never "Delete forever".

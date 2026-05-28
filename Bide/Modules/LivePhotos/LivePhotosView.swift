@@ -242,7 +242,7 @@ struct LivePhotosView: View {
         basket.toggle(
             ReviewBasket.Item(
                 localIdentifier: live.localIdentifier,
-                source: .largeVideos,
+                source: .livePhotos,
                 estimatedBytes: live.fileSize,
                 displayDate: live.formattedDate
             )

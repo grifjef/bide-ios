@@ -129,7 +129,7 @@ struct ScreenRecordingsView: View {
         basket.toggle(
             ReviewBasket.Item(
                 localIdentifier: recording.localIdentifier,
-                source: .largeVideos,
+                source: .screenRecordings,
                 estimatedBytes: recording.fileSize,
                 displayDate: recording.formattedDate
             )

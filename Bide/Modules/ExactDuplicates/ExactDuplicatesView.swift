@@ -140,7 +140,7 @@ struct ExactDuplicatesView: View {
             basket.add(
                 ReviewBasket.Item(
                     localIdentifier: duplicate.id,
-                    source: .similar,
+                    source: .exactDuplicates,
                     estimatedBytes: duplicate.estimatedFileSize,
                     displayDate: dateFormatter.string(from: duplicate.creationDate)
                 )

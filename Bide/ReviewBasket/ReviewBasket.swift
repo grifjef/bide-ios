@@ -9,16 +9,24 @@ final class ReviewBasket {
 
     enum Source: String, CaseIterable, Sendable {
         case largeVideos
+        case screenRecordings
         case screenshots
+        case livePhotos
         case similar
         case blurry
+        case exactDuplicates
+        case onThisDay
 
         var displayName: String {
             switch self {
             case .largeVideos: return "Large videos"
+            case .screenRecordings: return "Screen recordings"
             case .screenshots: return "Screenshots"
+            case .livePhotos: return "Live Photos"
             case .similar: return "Similar photos"
             case .blurry: return "Blurry shots"
+            case .exactDuplicates: return "Exact duplicates"
+            case .onThisDay: return "On this day"
             }
         }
     }

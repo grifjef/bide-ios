@@ -150,7 +150,7 @@ struct OnThisDayView: View {
         basket.toggle(
             ReviewBasket.Item(
                 localIdentifier: item.localIdentifier,
-                source: .similar,
+                source: .onThisDay,
                 estimatedBytes: item.estimatedFileSize,
                 displayDate: formattedDate(item.creationDate)
             )

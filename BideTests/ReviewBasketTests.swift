@@ -67,4 +67,43 @@ final class ReviewBasketTests: XCTestCase {
         XCTAssertTrue(basket.isEmpty)
         XCTAssertEqual(basket.totalBytes, 0)
     }
+
+    // MARK: - Source enum coverage
+
+    func test_everySourceHasNonEmptyDisplayName() {
+        for source in ReviewBasket.Source.allCases {
+            XCTAssertFalse(
+                source.displayName.isEmpty,
+                "Source \(source.rawValue) must have a displayName"
+            )
+        }
+    }
+
+    func test_newerModuleSourcesAreDistinct() {
+        // Regression guard: the v0.5 + v0.6 modules used to reuse old source
+        // values, which made items appear under the wrong section in the
+        // Review Basket. The new cases must be distinct from the legacy four.
+        let allCases = ReviewBasket.Source.allCases
+        let raws = Set(allCases.map(\.rawValue))
+        XCTAssertEqual(raws.count, allCases.count, "Source raw values must be unique")
+        XCTAssertTrue(raws.contains("screenRecordings"))
+        XCTAssertTrue(raws.contains("livePhotos"))
+        XCTAssertTrue(raws.contains("exactDuplicates"))
+        XCTAssertTrue(raws.contains("onThisDay"))
+    }
+
+    func test_itemsAreGroupedByExactSource() {
+        let basket = ReviewBasket()
+        basket.add(.init(localIdentifier: "lv", source: .largeVideos, estimatedBytes: 1))
+        basket.add(.init(localIdentifier: "sr", source: .screenRecordings, estimatedBytes: 1))
+        basket.add(.init(localIdentifier: "lp", source: .livePhotos, estimatedBytes: 1))
+        basket.add(.init(localIdentifier: "xd", source: .exactDuplicates, estimatedBytes: 1))
+        basket.add(.init(localIdentifier: "od", source: .onThisDay, estimatedBytes: 1))
+
+        XCTAssertEqual(basket.items(from: .largeVideos).map(\.id), ["lv"])
+        XCTAssertEqual(basket.items(from: .screenRecordings).map(\.id), ["sr"])
+        XCTAssertEqual(basket.items(from: .livePhotos).map(\.id), ["lp"])
+        XCTAssertEqual(basket.items(from: .exactDuplicates).map(\.id), ["xd"])
+        XCTAssertEqual(basket.items(from: .onThisDay).map(\.id), ["od"])
+    }
 }

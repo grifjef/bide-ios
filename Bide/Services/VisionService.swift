@@ -56,4 +56,28 @@ struct VisionService: Sendable {
             return nil
         }
     }
+
+    /// Detect the number of faces in an image. Used by Blurry Shots to
+    /// protect portraits (slightly blurry photos of people are still worth
+    /// keeping). Returns 0 on detection failure — we never auto-flag an
+    /// image we couldn't analyze.
+    ///
+    /// Uses rectangle detection (no recognition / no identity). We don't ID
+    /// who is in the photo, just count detected face bounding boxes.
+    nonisolated func faceCount(in image: UIImage) async -> Int {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Int, Never>) in
+            guard let cgImage = image.cgImage else {
+                continuation.resume(returning: 0)
+                return
+            }
+            let request = VNDetectFaceRectanglesRequest()
+            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+            do {
+                try handler.perform([request])
+                continuation.resume(returning: request.results?.count ?? 0)
+            } catch {
+                continuation.resume(returning: 0)
+            }
+        }
+    }
 }

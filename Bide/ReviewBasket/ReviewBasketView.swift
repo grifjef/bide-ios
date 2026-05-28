@@ -8,6 +8,18 @@ struct ReviewBasketView: View {
     @State private var isConfirming = false
     @State private var isDeleting = false
     @State private var deletionResult: DeletionResult?
+    @State private var summarySession: CompletionSummary?
+
+    struct CompletionSummary: Identifiable {
+        let id = UUID()
+        let count: Int
+        let bytes: Int64
+        let completedAt: Date
+
+        var formattedBytes: String {
+            ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+        }
+    }
 
     enum DeletionResult: Equatable {
         case success(count: Int, bytes: Int64)
@@ -49,12 +61,9 @@ struct ReviewBasketView: View {
         }
         .alert(item: $deletionResult) { result in
             switch result {
-            case .success(let count, let bytes):
-                return Alert(
-                    title: Text("Moved to Recently Deleted"),
-                    message: Text("\(count) item\(count == 1 ? "" : "s"), \(ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)). Recover them from Photos for the next 30 days."),
-                    dismissButton: .default(Text("Done")) { dismiss() }
-                )
+            case .success:
+                // Success uses the fullscreen summary instead of an alert.
+                return Alert(title: Text(""), dismissButton: .default(Text("Done")))
             case .cancelled:
                 return Alert(
                     title: Text("Cancelled"),
@@ -68,6 +77,13 @@ struct ReviewBasketView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
+        }
+        .sheet(item: $summarySession) { session in
+            SessionSummaryView(session: session) {
+                summarySession = nil
+                dismiss()
+            }
+            .interactiveDismissDisabled()
         }
     }
 
@@ -156,7 +172,11 @@ struct ReviewBasketView: View {
         do {
             try await photoLibrary.delete(identifiers: toDelete)
             basket.clear()
-            deletionResult = .success(count: count, bytes: totalBytes)
+            summarySession = CompletionSummary(
+                count: count,
+                bytes: totalBytes,
+                completedAt: Date()
+            )
         } catch {
             // PhotoKit throws if the user denies the system confirmation sheet.
             // That's a user-cancel, not a real error.

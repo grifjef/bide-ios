@@ -142,6 +142,11 @@ struct BlurryShotsView: View {
                 Text("Scanned \(scan.totalConsidered) photo\(scan.totalConsidered == 1 ? "" : "s") · \(scan.protectedSkipped) protected and skipped")
                     .font(BideTheme.caption())
                     .foregroundStyle(BideTheme.textSecondary)
+                if scan.faceProtectedSkipped > 0 {
+                    Label("\(scan.faceProtectedSkipped) protected for faces", systemImage: "person.crop.circle.fill.badge.checkmark")
+                        .font(BideTheme.caption())
+                        .foregroundStyle(BideTheme.primary)
+                }
             }
             Spacer()
             Button("Scan again") { scan.startScan() }

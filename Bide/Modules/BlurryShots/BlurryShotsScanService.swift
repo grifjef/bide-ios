@@ -27,9 +27,11 @@ final class BlurryShotsScanService {
     private(set) var candidates: [BlurryCandidate] = []
     private(set) var totalConsidered: Int = 0
     private(set) var protectedSkipped: Int = 0
+    private(set) var faceProtectedSkipped: Int = 0
     private(set) var lastCompletedAt: Date?
 
     private let photoLibrary: PhotoLibraryService
+    private let vision = VisionService()
     private let now: Date
     private let recencyThreshold: TimeInterval
     private let blurThreshold: Float
@@ -68,11 +70,13 @@ final class BlurryShotsScanService {
         candidates = []
         totalConsidered = 0
         protectedSkipped = 0
+        faceProtectedSkipped = 0
         state = .scanning(progress: 0, label: "Looking for blurry shots…")
 
-        currentTask = Task { [photoLibrary, scanLimit, thumbnailSize, blurThreshold] in
+        currentTask = Task { [photoLibrary, vision, scanLimit, thumbnailSize, blurThreshold] in
             await self.runScan(
                 photoLibrary: photoLibrary,
+                vision: vision,
                 scanLimit: scanLimit,
                 thumbnailSize: thumbnailSize,
                 blurThreshold: blurThreshold
@@ -101,6 +105,7 @@ final class BlurryShotsScanService {
 
     private func runScan(
         photoLibrary: PhotoLibraryService,
+        vision: VisionService,
         scanLimit: Int,
         thumbnailSize: CGSize,
         blurThreshold: Float
@@ -142,20 +147,31 @@ final class BlurryShotsScanService {
             if Task.isCancelled { state = .cancelled; return }
 
             guard let score = BlurDetector.analyze(thumb) else { continue }
-            if score < blurThreshold {
-                found.append(
-                    BlurryCandidate(
-                        localIdentifier: item.localIdentifier,
-                        creationDate: item.creationDate,
-                        pixelWidth: item.pixelWidth,
-                        pixelHeight: item.pixelHeight,
-                        estimatedFileSize: item.estimatedFileSize,
-                        isFavorite: item.isFavorite,
-                        isHidden: item.isHidden,
-                        blurScore: score
-                    )
-                )
+            guard score < blurThreshold else { continue }
+
+            // Face protection — a slightly blurry portrait is still worth
+            // keeping. We use Vision's lightweight rectangle detection
+            // (no recognition, no identity). If detection fails, we err on
+            // the side of NOT flagging — silent zero is a deliberate choice
+            // in VisionService.faceCount.
+            let faces = await vision.faceCount(in: thumb)
+            if faces > 0 {
+                faceProtectedSkipped += 1
+                continue
             }
+
+            found.append(
+                BlurryCandidate(
+                    localIdentifier: item.localIdentifier,
+                    creationDate: item.creationDate,
+                    pixelWidth: item.pixelWidth,
+                    pixelHeight: item.pixelHeight,
+                    estimatedFileSize: item.estimatedFileSize,
+                    isFavorite: item.isFavorite,
+                    isHidden: item.isHidden,
+                    blurScore: score
+                )
+            )
         }
 
         // Sort by blurriest first — most confident candidates appear at the top.

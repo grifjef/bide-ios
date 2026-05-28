@@ -57,6 +57,40 @@ struct VisionService: Sendable {
         }
     }
 
+    /// Count characters of recognized text in an image. Used by the
+    /// Screenshots module to classify by category (visual / mixed / text-heavy)
+    /// **without ever inspecting the actual text content** — we discard the
+    /// recognized strings as soon as we have the length.
+    ///
+    /// Uses `recognitionLevel = .fast` since accuracy doesn't matter for the
+    /// character-count signal: a fast pass that returns "approximately 280
+    /// characters" is just as good as an accurate one for bucketing purposes.
+    /// Returns 0 on detection failure — same defensive pattern as faceCount.
+    nonisolated func textCharacterCount(in image: UIImage) async -> Int {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Int, Never>) in
+            guard let cgImage = image.cgImage else {
+                continuation.resume(returning: 0)
+                return
+            }
+            let request = VNRecognizeTextRequest()
+            request.recognitionLevel = .fast
+            request.usesLanguageCorrection = false
+            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+            do {
+                try handler.perform([request])
+                let observations = request.results ?? []
+                var totalChars = 0
+                for observation in observations {
+                    guard let top = observation.topCandidates(1).first else { continue }
+                    totalChars += top.string.count
+                }
+                continuation.resume(returning: totalChars)
+            } catch {
+                continuation.resume(returning: 0)
+            }
+        }
+    }
+
     /// Detect the number of faces in an image. Used by Blurry Shots to
     /// protect portraits (slightly blurry photos of people are still worth
     /// keeping). Returns 0 on detection failure — we never auto-flag an

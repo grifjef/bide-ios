@@ -53,6 +53,16 @@ final class IndexedAsset {
     /// time the print was computed. Nil if no print is stored.
     var featurePrintVersion: Int?
 
+    /// Number of characters of text Vision found in this asset's OCR pass.
+    /// Used by the Screenshots module to categorize without re-running OCR
+    /// on every dashboard visit. We never persist the recognized strings.
+    var textCharacterCount: Int?
+
+    /// `ScreenshotCategory.rawValue` if we've classified this asset (only
+    /// relevant for screenshot media subtypes). Persisted so the user's
+    /// filter chip selection survives app restarts.
+    var screenshotCategoryRaw: Int?
+
     init(
         localIdentifier: String,
         creationDate: Date? = nil,
@@ -71,7 +81,9 @@ final class IndexedAsset {
         riskLevelRaw: Int = 0,
         clusterIdentifier: UUID? = nil,
         featurePrintData: Data? = nil,
-        featurePrintVersion: Int? = nil
+        featurePrintVersion: Int? = nil,
+        textCharacterCount: Int? = nil,
+        screenshotCategoryRaw: Int? = nil
     ) {
         self.localIdentifier = localIdentifier
         self.creationDate = creationDate
@@ -91,6 +103,8 @@ final class IndexedAsset {
         self.clusterIdentifier = clusterIdentifier
         self.featurePrintData = featurePrintData
         self.featurePrintVersion = featurePrintVersion
+        self.textCharacterCount = textCharacterCount
+        self.screenshotCategoryRaw = screenshotCategoryRaw
     }
 }
 

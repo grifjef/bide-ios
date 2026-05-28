@@ -134,6 +134,47 @@ final class IndexedAssetStore {
         )
     }
 
+    // MARK: - Screenshot category persistence
+
+    /// Persist the OCR character count + classified category for a screenshot.
+    /// Creates the IndexedAsset if it doesn't exist yet. Doesn't touch any
+    /// feature-print fields — those live on the same row but are independent.
+    @discardableResult
+    func upsertScreenshotCategory(
+        localIdentifier: String,
+        textCharacterCount: Int,
+        category: ScreenshotCategory,
+        analyzedAt: Date = Date()
+    ) throws -> IndexedAsset {
+        if let existing = try fetch(localIdentifier: localIdentifier) {
+            existing.textCharacterCount = textCharacterCount
+            existing.screenshotCategoryRaw = category.rawValue
+            existing.lastAnalyzedAt = analyzedAt
+            try modelContext.save()
+            return existing
+        }
+        let new = IndexedAsset(
+            localIdentifier: localIdentifier,
+            mediaType: 1, // image
+            lastAnalyzedAt: analyzedAt,
+            textCharacterCount: textCharacterCount,
+            screenshotCategoryRaw: category.rawValue
+        )
+        modelContext.insert(new)
+        try modelContext.save()
+        return new
+    }
+
+    /// Return the stored category for a screenshot, or nil if we haven't
+    /// classified it yet (or the row exists but has no category).
+    func storedScreenshotCategory(for localIdentifier: String) throws -> ScreenshotCategory? {
+        guard let asset = try fetch(localIdentifier: localIdentifier),
+              let raw = asset.screenshotCategoryRaw,
+              let category = ScreenshotCategory(rawValue: raw)
+        else { return nil }
+        return category
+    }
+
     // MARK: - Reconciliation
 
     /// Drop indexed entries whose `localIdentifier` isn't in `presentIdentifiers`.

@@ -43,18 +43,42 @@ final class ScreenshotsViewModel {
     private(set) var totalCount: Int = 0
     private(set) var protectedCount: Int = 0
 
+    /// Active filter — when non-nil, the view shows only screenshots whose
+    /// stored category matches. Unanalyzed screenshots are always shown
+    /// regardless of filter (we don't hide things we haven't OCR'd yet).
+    var filter: ScreenshotCategory?
+
+    /// Cached per-screenshot category lookup populated from `IndexedAssetStore`
+    /// on each `reload`. Decoupled from the persistence layer so the View can
+    /// read it without async hops.
+    private(set) var cachedCategories: [String: ScreenshotCategory] = [:]
+
+    /// Set to true when `classify(...)` is running. The view shows a progress
+    /// indicator and disables the Sort button.
+    private(set) var isClassifying: Bool = false
+    private(set) var classifyProgress: Double = 0.0
+    private(set) var classifiedCount: Int = 0
+
     private let photoLibrary: PhotoLibraryService
+    private let vision = VisionService()
     private let now: Date
     private let recencyThreshold: TimeInterval
+
+    /// Optional persistence layer. When provided, category results are
+    /// cached so subsequent visits don't re-OCR. Production code injects
+    /// the IndexedAssetStore; tests can pass nil for behavior-only tests.
+    private let indexedAssetStore: IndexedAssetStore?
 
     init(
         photoLibrary: PhotoLibraryService,
         now: Date = Date(),
-        recencyDays: Int = 30
+        recencyDays: Int = 30,
+        indexedAssetStore: IndexedAssetStore? = nil
     ) {
         self.photoLibrary = photoLibrary
         self.now = now
         self.recencyThreshold = TimeInterval(recencyDays * 24 * 60 * 60)
+        self.indexedAssetStore = indexedAssetStore
     }
 
     // MARK: - Loading
@@ -71,7 +95,87 @@ final class ScreenshotsViewModel {
         yearGroups = Self.groupMonthsByYear(groups)
         totalCount = fetched.count
         protectedCount = fetched.filter { isProtected($0) }.count
+        // Pull any previously-stored categories so the filter chips work
+        // immediately without re-OCR.
+        cachedCategories = loadCachedCategories(for: fetched)
         loadState = .loaded
+    }
+
+    private func loadCachedCategories(
+        for screenshots: [ScreenshotSummary]
+    ) -> [String: ScreenshotCategory] {
+        guard let store = indexedAssetStore else { return [:] }
+        var result: [String: ScreenshotCategory] = [:]
+        for screenshot in screenshots {
+            if let category = try? store.storedScreenshotCategory(for: screenshot.localIdentifier) {
+                result[screenshot.localIdentifier] = category
+            }
+        }
+        return result
+    }
+
+    /// Category of a screenshot — either from cache, or `.unanalyzed`.
+    func category(for screenshot: ScreenshotSummary) -> ScreenshotCategory {
+        cachedCategories[screenshot.localIdentifier] ?? .unanalyzed
+    }
+
+    /// True if the active filter matches this screenshot, or no filter is set.
+    /// Unanalyzed screenshots pass any filter — we never hide things we
+    /// haven't OCR'd.
+    func passesFilter(_ screenshot: ScreenshotSummary) -> Bool {
+        guard let filter else { return true }
+        let cat = category(for: screenshot)
+        if cat == .unanalyzed { return true }
+        return cat == filter
+    }
+
+    // MARK: - Classification
+
+    /// Run OCR on any screenshot we haven't classified yet and persist the
+    /// result. Resumable — re-running it only processes the remaining
+    /// unanalyzed items.
+    func classifyUnanalyzed() async {
+        guard !isClassifying else { return }
+        guard let store = indexedAssetStore else { return }
+
+        let allItems = groups.flatMap(\.items)
+        let toScan = allItems.filter { cachedCategories[$0.localIdentifier] == nil }
+        guard !toScan.isEmpty else { return }
+
+        isClassifying = true
+        classifyProgress = 0
+        classifiedCount = 0
+        defer { isClassifying = false }
+
+        let thumbnailSize = CGSize(width: 256, height: 256)
+        for (idx, item) in toScan.enumerated() {
+            if Task.isCancelled { return }
+            guard let image = await photoLibrary.requestThumbnail(
+                for: item.localIdentifier,
+                targetSize: thumbnailSize
+            ) else { continue }
+
+            let chars = await vision.textCharacterCount(in: image)
+            let category = OCRClassifier.classify(textCharacterCount: chars)
+            cachedCategories[item.localIdentifier] = category
+            _ = try? store.upsertScreenshotCategory(
+                localIdentifier: item.localIdentifier,
+                textCharacterCount: chars,
+                category: category
+            )
+            classifiedCount += 1
+            classifyProgress = Double(idx + 1) / Double(toScan.count)
+        }
+    }
+
+    /// Distribution of cached categories — used in the filter sheet for
+    /// "N visual · M text-heavy".
+    var categoryCounts: [ScreenshotCategory: Int] {
+        var counts: [ScreenshotCategory: Int] = [:]
+        for cat in cachedCategories.values {
+            counts[cat, default: 0] += 1
+        }
+        return counts
     }
 
     // MARK: - Protection logic

@@ -3,6 +3,7 @@ import SwiftUI
 struct ScreenshotsView: View {
     @Environment(PhotoLibraryService.self) private var photoLibrary
     @Environment(ReviewBasket.self) private var basket
+    @Environment(\.modelContext) private var modelContext
     @State private var viewModel: ScreenshotsViewModel?
 
     var body: some View {
@@ -19,7 +20,11 @@ struct ScreenshotsView: View {
         .navigationBarTitleDisplayMode(.large)
         .task {
             if viewModel == nil {
-                viewModel = ScreenshotsViewModel(photoLibrary: photoLibrary)
+                let store = IndexedAssetStore(modelContext: modelContext)
+                viewModel = ScreenshotsViewModel(
+                    photoLibrary: photoLibrary,
+                    indexedAssetStore: store
+                )
             }
             await viewModel?.loadIfNeeded()
         }
@@ -169,21 +174,102 @@ struct ScreenshotsView: View {
     }
 
     private func summaryHeader(_ viewModel: ScreenshotsViewModel) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("\(viewModel.totalCount) screenshot\(viewModel.totalCount == 1 ? "" : "s")")
-                    .font(BideTheme.cardTitle())
-                if viewModel.protectedCount > 0 {
-                    Text("\(viewModel.protectedCount) protected (favorited or recent)")
-                        .font(BideTheme.caption())
-                        .foregroundStyle(BideTheme.textSecondary)
+        VStack(alignment: .leading, spacing: BideTheme.s) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(viewModel.totalCount) screenshot\(viewModel.totalCount == 1 ? "" : "s")")
+                        .font(BideTheme.cardTitle())
+                    if viewModel.protectedCount > 0 {
+                        Text("\(viewModel.protectedCount) protected (favorited or recent)")
+                            .font(BideTheme.caption())
+                            .foregroundStyle(BideTheme.textSecondary)
+                    }
+                }
+                Spacer()
+                sortButton(viewModel)
+            }
+
+            if !viewModel.cachedCategories.isEmpty || viewModel.isClassifying {
+                filterChips(viewModel)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func sortButton(_ viewModel: ScreenshotsViewModel) -> some View {
+        if viewModel.isClassifying {
+            HStack(spacing: BideTheme.xs) {
+                ProgressView()
+                    .controlSize(.mini)
+                Text("\(viewModel.classifiedCount) sorted")
+                    .font(BideTheme.caption())
+            }
+            .foregroundStyle(BideTheme.textSecondary)
+        } else {
+            let totalUnanalyzed = viewModel.groups
+                .flatMap(\.items)
+                .filter { viewModel.category(for: $0) == .unanalyzed }
+                .count
+            if totalUnanalyzed > 0 {
+                Button {
+                    Task { await viewModel.classifyUnanalyzed() }
+                } label: {
+                    Label("Sort by type", systemImage: "text.viewfinder")
+                        .font(BideTheme.caption().weight(.semibold))
+                }
+                .buttonStyle(.bordered)
+                .tint(BideTheme.accent)
+                .controlSize(.small)
+            }
+        }
+    }
+
+    private func filterChips(_ viewModel: ScreenshotsViewModel) -> some View {
+        @Bindable var bindableVM = viewModel
+        let counts = viewModel.categoryCounts
+        return ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: BideTheme.s) {
+                chip(
+                    label: "All",
+                    iconName: "circle.grid.2x2",
+                    isSelected: bindableVM.filter == nil
+                ) { bindableVM.filter = nil }
+
+                ForEach([ScreenshotCategory.textHeavy, .mixed, .visual]) { category in
+                    let count = counts[category] ?? 0
+                    if count > 0 {
+                        chip(
+                            label: "\(category.displayName) · \(count)",
+                            iconName: category.iconName,
+                            isSelected: bindableVM.filter == category
+                        ) {
+                            bindableVM.filter = (bindableVM.filter == category) ? nil : category
+                        }
+                    }
                 }
             }
-            Spacer()
-            Text("Newest first")
-                .font(BideTheme.caption())
-                .foregroundStyle(BideTheme.textTertiary)
+            .padding(.horizontal, BideTheme.xs)
         }
+    }
+
+    private func chip(
+        label: String,
+        iconName: String,
+        isSelected: Bool,
+        onTap: @escaping () -> Void
+    ) -> some View {
+        Button(action: onTap) {
+            Label(label, systemImage: iconName)
+                .font(BideTheme.caption().weight(.semibold))
+                .padding(.horizontal, BideTheme.m)
+                .padding(.vertical, BideTheme.s)
+                .background(
+                    Capsule().fill(isSelected ? BideTheme.accent : BideTheme.surface)
+                )
+                .foregroundStyle(isSelected ? .white : BideTheme.textPrimary)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     private func sectionHeader(for group: ScreenshotsViewModel.MonthGroup, viewModel: ScreenshotsViewModel) -> some View {
@@ -223,8 +309,9 @@ struct ScreenshotsView: View {
             GridItem(.flexible(), spacing: BideTheme.s),
             GridItem(.flexible(), spacing: BideTheme.s)
         ]
+        let filteredItems = group.items.filter { viewModel.passesFilter($0) }
         return LazyVGrid(columns: columns, spacing: BideTheme.s) {
-            ForEach(group.items) { item in
+            ForEach(filteredItems) { item in
                 ScreenshotTile(
                     item: item,
                     protection: viewModel.protectionReason(item),

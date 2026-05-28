@@ -40,7 +40,7 @@ Live URL: *(App Store — v1.0 submitted, Waiting for Review as of 2026-05-27)*
 │   ├── Persistence/               # BideStore, IndexedAssetStore, ReclaimHistoryStore, FeaturePrintCoder
 │   ├── ReviewBasket/              # ReviewBasket model + UI + SessionSummaryView
 │   └── Settings/                  # SettingsView, HowBideWorksView, DiagnosticsView
-├── BideTests/               # XCTest unit tests (175 tests as of v1.1)
+├── BideTests/               # XCTest unit tests (183 tests as of v1.1)
 ├── BideUITests/             # XCUITest UI tests (launch smoke)
 ├── product/
 │   └── spec.md              # full product specification

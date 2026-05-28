@@ -52,6 +52,54 @@ final class ScreenshotsViewModelTests: XCTestCase {
         XCTAssertEqual(ScreenshotsViewModel.groupByMonth([]), [])
     }
 
+    // MARK: - Year grouping
+
+    func test_groupMonthsByYear_aggregatesAcrossMonthsOfSameYear() {
+        let may2026 = makeSummary(id: "a", date: dateFor(year: 2026, month: 5, day: 10))
+        let april2026 = makeSummary(id: "b", date: dateFor(year: 2026, month: 4, day: 15))
+        let dec2025 = makeSummary(id: "c", date: dateFor(year: 2025, month: 12, day: 1))
+
+        let months = ScreenshotsViewModel.groupByMonth([may2026, april2026, dec2025])
+        let years = ScreenshotsViewModel.groupMonthsByYear(months)
+
+        XCTAssertEqual(years.count, 2)
+        XCTAssertEqual(years.map(\.id), [2026, 2025])
+        XCTAssertEqual(years[0].months.count, 2)
+        XCTAssertEqual(years[0].totalItems, 2)
+        XCTAssertEqual(years[1].months.count, 1)
+        XCTAssertEqual(years[1].totalItems, 1)
+    }
+
+    func test_groupMonthsByYear_sortsNewestYearFirst() {
+        let items = [
+            makeSummary(id: "a", date: dateFor(year: 2023, month: 1, day: 1)),
+            makeSummary(id: "b", date: dateFor(year: 2026, month: 1, day: 1)),
+            makeSummary(id: "c", date: dateFor(year: 2024, month: 1, day: 1))
+        ]
+        let months = ScreenshotsViewModel.groupByMonth(items)
+        let years = ScreenshotsViewModel.groupMonthsByYear(months)
+
+        XCTAssertEqual(years.map(\.id), [2026, 2024, 2023])
+    }
+
+    func test_groupMonthsByYear_emptyInputReturnsEmpty() {
+        XCTAssertEqual(ScreenshotsViewModel.groupMonthsByYear([]), [])
+    }
+
+    func test_selectableItemsInYear_excludesProtectedAcrossMonths() {
+        let vm = makeViewModel(now: dateFor(year: 2026, month: 5, day: 27), recencyDays: 30)
+        let monthA = makeSummary(id: "a", date: dateFor(year: 2024, month: 3, day: 10))
+        let monthB = makeSummary(id: "b", date: dateFor(year: 2024, month: 6, day: 15), isFavorite: true)
+        let monthC = makeSummary(id: "c", date: dateFor(year: 2024, month: 6, day: 20))
+
+        let groups = ScreenshotsViewModel.groupByMonth([monthA, monthB, monthC])
+        let years = ScreenshotsViewModel.groupMonthsByYear(groups)
+        XCTAssertEqual(years.count, 1)
+
+        let selectable = vm.selectableItems(in: years[0])
+        XCTAssertEqual(Set(selectable.map(\.localIdentifier)), Set(["a", "c"]))
+    }
+
     // MARK: - Protection
 
     func test_protectionReason_favoriteIsProtected() {

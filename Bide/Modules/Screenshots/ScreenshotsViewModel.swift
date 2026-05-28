@@ -19,6 +19,18 @@ final class ScreenshotsViewModel {
         let items: [ScreenshotSummary]
     }
 
+    /// Groups months by their year so the UI can offer "Select all from 2024"
+    /// bulk actions at the year boundary. Years are sorted newest first.
+    struct YearGroup: Identifiable, Equatable {
+        let id: Int             // 2026
+        let title: String       // "2026"
+        let months: [MonthGroup]
+
+        var totalItems: Int {
+            months.reduce(0) { $0 + $1.items.count }
+        }
+    }
+
     enum ProtectionReason: Equatable {
         case favorite
         case hidden
@@ -27,6 +39,7 @@ final class ScreenshotsViewModel {
 
     private(set) var loadState: LoadState = .idle
     private(set) var groups: [MonthGroup] = []
+    private(set) var yearGroups: [YearGroup] = []
     private(set) var totalCount: Int = 0
     private(set) var protectedCount: Int = 0
 
@@ -55,6 +68,7 @@ final class ScreenshotsViewModel {
         loadState = .loading
         let fetched = await photoLibrary.fetchScreenshots(limit: 1000)
         groups = Self.groupByMonth(fetched)
+        yearGroups = Self.groupMonthsByYear(groups)
         totalCount = fetched.count
         protectedCount = fetched.filter { isProtected($0) }.count
         loadState = .loaded
@@ -118,11 +132,36 @@ final class ScreenshotsViewModel {
             }
     }
 
+    // MARK: - Grouping (year)
+
+    /// Aggregate month groups into year groups. Years are sorted newest first
+    /// (matching the month sort), and within each year months are already in
+    /// newest-first order from `groupByMonth`.
+    static func groupMonthsByYear(_ months: [MonthGroup]) -> [YearGroup] {
+        let calendar = Calendar.current
+        var bucket: [Int: [MonthGroup]] = [:]
+        for month in months {
+            let year = calendar.component(.year, from: month.representativeDate)
+            bucket[year, default: []].append(month)
+        }
+        return bucket
+            .map { (year, months) -> YearGroup in
+                YearGroup(id: year, title: "\(year)", months: months)
+            }
+            .sorted { $0.id > $1.id }
+    }
+
     // MARK: - Basket helpers
 
     /// All non-protected items in a single month group.
     func selectableItems(in group: MonthGroup) -> [ScreenshotSummary] {
         group.items.filter { !isProtected($0) }
+    }
+
+    /// All non-protected items across every month in a year group.
+    /// Used by the "Select all from YYYY" quick-clear affordance.
+    func selectableItems(in year: YearGroup) -> [ScreenshotSummary] {
+        year.months.flatMap { selectableItems(in: $0) }
     }
 }
 

@@ -93,16 +93,78 @@ struct ScreenshotsView: View {
             VStack(alignment: .leading, spacing: BideTheme.m) {
                 summaryHeader(viewModel)
                 LazyVStack(alignment: .leading, spacing: BideTheme.l, pinnedViews: [.sectionHeaders]) {
-                    ForEach(viewModel.groups) { group in
-                        Section {
-                            grid(for: group, viewModel: viewModel)
-                        } header: {
-                            sectionHeader(for: group, viewModel: viewModel)
+                    ForEach(viewModel.yearGroups) { year in
+                        yearHeader(year, viewModel: viewModel)
+                        ForEach(year.months) { month in
+                            Section {
+                                grid(for: month, viewModel: viewModel)
+                            } header: {
+                                sectionHeader(for: month, viewModel: viewModel)
+                            }
                         }
                     }
                 }
             }
             .padding(BideTheme.m)
+        }
+    }
+
+    private func yearHeader(
+        _ year: ScreenshotsViewModel.YearGroup,
+        viewModel: ScreenshotsViewModel
+    ) -> some View {
+        let selectable = viewModel.selectableItems(in: year)
+        let selected = selectable.filter { basket.contains(localIdentifier: $0.localIdentifier) }
+        let allInBasket = !selectable.isEmpty && selected.count == selectable.count
+
+        return HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(year.title)
+                    .font(BideTheme.display())
+                Text("\(year.totalItems) screenshot\(year.totalItems == 1 ? "" : "s")")
+                    .font(BideTheme.caption())
+                    .foregroundStyle(BideTheme.textSecondary)
+            }
+            Spacer()
+            if !selectable.isEmpty {
+                Button {
+                    toggleYear(year, viewModel: viewModel, allInBasket: allInBasket)
+                } label: {
+                    Text(allInBasket
+                         ? "Deselect \(selectable.count)"
+                         : "Select all \(selectable.count)")
+                        .font(BideTheme.caption().weight(.semibold))
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(BideTheme.accent)
+                .controlSize(.small)
+                .accessibilityLabel(allInBasket
+                    ? "Deselect all \(selectable.count) selectable screenshots from \(year.title)"
+                    : "Select all \(selectable.count) selectable screenshots from \(year.title)")
+            }
+        }
+        .padding(.top, BideTheme.s)
+        .accessibilityElement(children: .contain)
+    }
+
+    private func toggleYear(
+        _ year: ScreenshotsViewModel.YearGroup,
+        viewModel: ScreenshotsViewModel,
+        allInBasket: Bool
+    ) {
+        for item in viewModel.selectableItems(in: year) {
+            if allInBasket {
+                basket.remove(localIdentifier: item.localIdentifier)
+            } else if !basket.contains(localIdentifier: item.localIdentifier) {
+                basket.add(
+                    ReviewBasket.Item(
+                        localIdentifier: item.localIdentifier,
+                        source: .screenshots,
+                        estimatedBytes: estimatedScreenshotBytes(item),
+                        displayDate: item.formattedDate
+                    )
+                )
+            }
         }
     }
 

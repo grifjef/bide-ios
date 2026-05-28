@@ -44,9 +44,11 @@ final class SimilarPhotosScanService {
     /// tests can pass nil to fall back to the v0.2 behavior.
     private let indexedAssetStore: IndexedAssetStore?
 
-    /// Lower this to make scans faster on first launch; raise it for completeness.
-    /// In v0.2 we cap at 500 to keep first-scan latency low; v0.3 will store the
-    /// feature-print index in SwiftData and resume incrementally.
+    /// Upper bound on how many candidates a single scan can process. The v0.3
+    /// SwiftData feature-print cache means re-runs only do new work, so the
+    /// first scan's cost dominates. With streaming + the cache, 5,000 is a
+    /// reasonable default — covers the ~95th-percentile camera roll. Heavy
+    /// users with 10k+ libraries can raise this.
     let scanLimit: Int
 
     /// Vision feature-print thumbnails are small — 256×256 is plenty for similarity
@@ -62,7 +64,7 @@ final class SimilarPhotosScanService {
 
     init(
         photoLibrary: PhotoLibraryService,
-        scanLimit: Int = 500,
+        scanLimit: Int = 5_000,
         indexedAssetStore: IndexedAssetStore? = nil
     ) {
         self.photoLibrary = photoLibrary
@@ -167,8 +169,28 @@ final class SimilarPhotosScanService {
         scanLimit: Int,
         thumbnailSize: CGSize
     ) async {
-        // 1. Fetch candidates
-        let candidates = await photoLibrary.fetchPhotoCandidates(limit: scanLimit)
+        // 1. Stream-read all candidates with progress, then process.
+        // We accumulate the full set (memory-bounded — a SimilarPhotoCandidate
+        // is ~200 bytes; 50k candidates ≈ 10 MB) because time-bucketing and
+        // burst grouping need the whole library to be correct.
+        let stream = photoLibrary.fetchPhotoCandidatesStream(maxTotal: scanLimit)
+        let plannedTotal = stream.totalCount
+        var candidates: [SimilarPhotoCandidate] = []
+        candidates.reserveCapacity(min(plannedTotal, scanLimit))
+
+        for await chunk in stream.chunks {
+            if Task.isCancelled { state = .cancelled; return }
+            candidates.append(contentsOf: chunk)
+
+            // Read phase gets the first 20% of the progress bar — leaves
+            // the bigger 80% for the Vision work where the user actually
+            // benefits from seeing motion.
+            let readFraction = Double(candidates.count) / Double(max(plannedTotal, 1))
+            state = .scanning(
+                progress: readFraction * 0.2,
+                label: "Reading library… \(candidates.count) of \(plannedTotal)"
+            )
+        }
         totalAssetsConsidered = candidates.count
 
         if Task.isCancelled { state = .cancelled; return }
@@ -246,16 +268,18 @@ final class SimilarPhotosScanService {
                    ) {
                     bucketPairs.append((candidate, stored))
                     featurePrintsReused += 1
+                    let frac = Double(processed) / Double(max(totalToProcess, 1))
                     state = .scanning(
-                        progress: Double(processed) / Double(totalToProcess),
+                        progress: 0.2 + frac * 0.8,
                         label: "Comparing photos from \(formatted(candidate.creationDate))…"
                     )
                     continue
                 }
 
                 // 4b. Miss — fetch a thumbnail, compute a print, persist it.
+                let frac = Double(processed) / Double(max(totalToProcess, 1))
                 state = .scanning(
-                    progress: Double(processed) / Double(totalToProcess),
+                    progress: 0.2 + frac * 0.8,
                     label: "Analyzing new photos from \(formatted(candidate.creationDate))…"
                 )
 

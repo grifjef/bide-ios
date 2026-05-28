@@ -228,9 +228,103 @@ final class PhotoLibraryService {
         return Int64(Double(bytesPerSec) * duration)
     }
 
+    /// Result type for chunked streaming enumeration. `totalCount` is the
+    /// up-front count for progress UI; `chunks` yields slices of candidates
+    /// as the scan reads them, allowing cancellation between chunks and a
+    /// "X of Y" progress label while the read phase runs.
+    struct PhotoCandidatesStream {
+        let totalCount: Int
+        let chunks: AsyncStream<[SimilarPhotoCandidate]>
+    }
+
+    /// Stream photo candidates in chunks. Lets scan services show accurate
+    /// progress, cancel between chunks, and (for memory-bounded use cases)
+    /// process incrementally without holding the whole library in memory.
+    ///
+    /// - `maxTotal`: hard ceiling on the number of candidates we'll process,
+    ///   for safety on absurdly large libraries (default 50_000 — covers
+    ///   the upper 99.9th percentile of real-world camera rolls).
+    /// - `chunkSize`: how many candidates to yield per chunk (default 500).
+    ///
+    /// Sorted by `creationDate` ascending so time-bucketing downstream is
+    /// deterministic.
+    func fetchPhotoCandidatesStream(
+        maxTotal: Int = 50_000,
+        chunkSize: Int = 500
+    ) -> PhotoCandidatesStream {
+        let options = PHFetchOptions()
+        options.predicate = NSPredicate(
+            format: "mediaType == %d",
+            PHAssetMediaType.image.rawValue
+        )
+        options.sortDescriptors = [
+            NSSortDescriptor(key: "creationDate", ascending: true)
+        ]
+        options.fetchLimit = maxTotal
+
+        let fetched = PHAsset.fetchAssets(with: options)
+        let totalCount = fetched.count
+
+        let chunks = AsyncStream<[SimilarPhotoCandidate]> { continuation in
+            Task.detached(priority: .userInitiated) {
+                var buffer: [SimilarPhotoCandidate] = []
+                buffer.reserveCapacity(chunkSize)
+
+                // Enumerate with PhotoKit's lazy iterator — never materializes
+                // the full result array.
+                fetched.enumerateObjects { asset, _, stop in
+                    guard let creationDate = asset.creationDate else { return }
+                    let resources = PHAssetResource.assetResources(for: asset)
+                    let size = resources.first.flatMap {
+                        ($0.value(forKey: "fileSize") as? NSNumber)?.int64Value
+                    } ?? 0
+
+                    let mediaSubtypes = asset.mediaSubtypes
+                    let isLive = mediaSubtypes.contains(.photoLive)
+                    let edited: Bool = {
+                        guard let mod = asset.modificationDate else { return false }
+                        return mod.timeIntervalSince(creationDate) > 1.0
+                    }()
+
+                    buffer.append(
+                        SimilarPhotoCandidate(
+                            localIdentifier: asset.localIdentifier,
+                            creationDate: creationDate,
+                            pixelWidth: asset.pixelWidth,
+                            pixelHeight: asset.pixelHeight,
+                            estimatedFileSize: size,
+                            isFavorite: asset.isFavorite,
+                            isHidden: asset.isHidden,
+                            isLivePhoto: isLive,
+                            hasBeenEdited: edited,
+                            isInUserAlbum: false,
+                            burstIdentifier: asset.burstIdentifier
+                        )
+                    )
+
+                    if buffer.count >= chunkSize {
+                        continuation.yield(buffer)
+                        buffer.removeAll(keepingCapacity: true)
+                    }
+                }
+
+                if !buffer.isEmpty {
+                    continuation.yield(buffer)
+                }
+                continuation.finish()
+            }
+        }
+
+        return PhotoCandidatesStream(totalCount: totalCount, chunks: chunks)
+    }
+
     /// Fetch photo candidates for similar-photo clustering. Returns lightweight value
     /// types with the metadata needed for keeper-scoring. Sorted by date ascending so
     /// that time-bucketing is deterministic.
+    ///
+    /// Most callers should prefer `fetchPhotoCandidatesStream(maxTotal:chunkSize:)`
+    /// which scales to whole libraries with progress reporting. This one-shot
+    /// fetch is kept for tests and the small-library fast path.
     func fetchPhotoCandidates(limit: Int = 1000) async -> [SimilarPhotoCandidate] {
         await Task.detached(priority: .userInitiated) {
             let options = PHFetchOptions()

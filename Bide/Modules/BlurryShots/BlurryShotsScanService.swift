@@ -36,8 +36,10 @@ final class BlurryShotsScanService {
     private let recencyThreshold: TimeInterval
     private let blurThreshold: Float
 
-    /// Max photos to scan per session. Same reasoning as `SimilarPhotosScanService` —
-    /// keep first-scan latency low; future versions persist results and resume.
+    /// Upper bound on candidates per scan. Blur detection is per-image work
+    /// (Laplacian variance on a downscaled grayscale) so the cost is linear
+    /// in the candidate count. 2,000 covers the typical user comfortably;
+    /// power users with much larger libraries can raise this.
     let scanLimit: Int
 
     private let thumbnailSize = CGSize(width: 256, height: 256)
@@ -45,7 +47,7 @@ final class BlurryShotsScanService {
 
     init(
         photoLibrary: PhotoLibraryService,
-        scanLimit: Int = 500,
+        scanLimit: Int = 2_000,
         blurThreshold: Float = BlurDetector.defaultBlurThreshold,
         now: Date = Date(),
         recencyDays: Int = 30
@@ -110,10 +112,21 @@ final class BlurryShotsScanService {
         thumbnailSize: CGSize,
         blurThreshold: Float
     ) async {
-        // We reuse SimilarPhotoCandidate as the source-of-truth value type for "a photo
-        // with the metadata we need" — it already carries everything BlurryCandidate
-        // needs (date, dimensions, flags, size).
-        let pool = await photoLibrary.fetchPhotoCandidates(limit: scanLimit)
+        // Stream-read the candidate pool with progress.
+        let stream = photoLibrary.fetchPhotoCandidatesStream(maxTotal: scanLimit)
+        let plannedTotal = stream.totalCount
+        var pool: [SimilarPhotoCandidate] = []
+        pool.reserveCapacity(min(plannedTotal, scanLimit))
+
+        for await chunk in stream.chunks {
+            if Task.isCancelled { state = .cancelled; return }
+            pool.append(contentsOf: chunk)
+            let readFraction = Double(pool.count) / Double(max(plannedTotal, 1))
+            state = .scanning(
+                progress: readFraction * 0.15, // 15% for read phase
+                label: "Reading library… \(pool.count) of \(plannedTotal)"
+            )
+        }
         totalConsidered = pool.count
 
         if Task.isCancelled { state = .cancelled; return }
@@ -134,8 +147,9 @@ final class BlurryShotsScanService {
 
         for (idx, item) in toScan.enumerated() {
             if Task.isCancelled { state = .cancelled; return }
+            let frac = Double(idx + 1) / Double(max(total, 1))
             state = .scanning(
-                progress: Double(idx + 1) / Double(total),
+                progress: 0.15 + frac * 0.85,
                 label: "Checking \(idx + 1) of \(total)…"
             )
 

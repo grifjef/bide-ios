@@ -24,13 +24,14 @@ final class ExactDuplicatesScanService {
 
     private let photoLibrary: PhotoLibraryService
 
-    /// We can scan much deeper than the Similar Photos engine because we don't
-    /// touch thumbnails or Vision — purely metadata work.
+    /// We can scan very deep here because the work is purely metadata —
+    /// no thumbnails, no Vision. 50,000 is the same upper bound used by the
+    /// streaming API; covers virtually every real camera roll.
     let scanLimit: Int
 
     private var currentTask: Task<Void, Never>?
 
-    init(photoLibrary: PhotoLibraryService, scanLimit: Int = 5_000) {
+    init(photoLibrary: PhotoLibraryService, scanLimit: Int = 50_000) {
         self.photoLibrary = photoLibrary
         self.scanLimit = scanLimit
     }
@@ -69,7 +70,18 @@ final class ExactDuplicatesScanService {
         photoLibrary: PhotoLibraryService,
         scanLimit: Int
     ) async {
-        let candidates = await photoLibrary.fetchPhotoCandidates(limit: scanLimit)
+        // Stream-read the library. Because detection is a single-pass
+        // dictionary group, we can build the signature index incrementally
+        // as chunks arrive — but for simplicity (and because the metadata
+        // load is small) we accumulate then detect at the end.
+        let stream = photoLibrary.fetchPhotoCandidatesStream(maxTotal: scanLimit)
+        var candidates: [SimilarPhotoCandidate] = []
+        candidates.reserveCapacity(stream.totalCount)
+
+        for await chunk in stream.chunks {
+            if Task.isCancelled { state = .cancelled; return }
+            candidates.append(contentsOf: chunk)
+        }
         totalAssetsConsidered = candidates.count
 
         if Task.isCancelled { state = .cancelled; return }

@@ -58,6 +58,12 @@ targets:
         TARGETED_DEVICE_FAMILY: "1" # iPhone only
         SUPPORTS_MACCATALYST: NO
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        # Background refresh — quick scan via BGAppRefreshTask so the
+        # dashboard is current when the user opens Bide overnight.
+        INFOPLIST_KEY_UIBackgroundModes:
+          - fetch
+        INFOPLIST_KEY_BGTaskSchedulerPermittedIdentifiers:
+          - com.bidephoto.bide.dashboardRefresh
 
   BideTests:
     type: bundle.unit-test

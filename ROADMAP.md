@@ -1,9 +1,9 @@
 # Bide roadmap
 
-> **Last updated:** 2026-05-27
-> **Live status:** v0.1 (build 1) submitted to Apple, **Waiting for Review**.
+> **Last updated:** 2026-05-28
+> **Live status:** v0.1 (build 1) submitted to Apple as v1.0, **Waiting for Review**. v0.6 development in progress on `main` toward a v1.1 update.
 
-This is the prioritized backlog after the v0.1 submission. Items are grouped by the version they'll ship in, then by priority within each version.
+This is the prioritized backlog after the v0.1 submission. Items are grouped by the version they'll ship in, then by priority within each version. **All v0.2 through v0.6 items shipped on `main`** ahead of the Apple decision — that work goes out as v1.1 once v1.0 is approved.
 
 ---
 
@@ -90,15 +90,67 @@ After Similar Photos lands.
 
 ---
 
-## v0.3 — Trust polish
+## v0.3 — Trust polish ✅
 
 Items that don't unlock new functionality but tighten the trust contract.
 
-- VoiceOver pass on every screen (audit + fix labels)
-- Dynamic Type test at XL / XXL accessibility sizes
-- Contrast audit (WCAG AA minimum)
-- Localization scaffolding (don't translate yet, but extract strings)
-- Crash reporting via MetricKit (already wired; verify it surfaces in Xcode Organizer)
+- ✅ VoiceOver pass on every screen
+- ✅ Dynamic Type test at XL / XXL accessibility sizes
+- ✅ Contrast audit (WCAG AA minimum)
+- ✅ SwiftData feature-print persistence (avoids re-clustering on every launch)
+- ✅ Limited Library Access banner
+- 🟡 Localization scaffolding (deferred to v1.2)
+- ✅ Crash reporting via MetricKit (verified, surfaced in Settings → Diagnostics)
+
+---
+
+## v0.4 — Dashboard and depth ✅
+
+- ✅ Exact Duplicates module (byte-for-byte detector)
+- ✅ Dashboard with live reclaim totals + pre-scan
+- ✅ Screenshots — quick-clear by year
+- ✅ Burst-mode clusters in Similar Photos
+- ✅ Face protection in Blurry Shots
+- ✅ Session summary screen after deletion
+
+---
+
+## v0.5 — Wider module surface ✅
+
+- ✅ Screen Recordings as a distinct module
+- ✅ Onboarding-time pre-scan
+- ✅ Lifetime storage-reclaim tracking
+- ✅ Stream-based scanning for large libraries
+- ✅ iCloud "needs download" UI in ThumbnailView
+- ✅ Live Photos module
+- ✅ On This Day module + dashboard card
+- ✅ Screenshot category bucketing (OCR-light)
+- ✅ Dashboard section grouping
+- ✅ MetricKit diagnostics surfaced in Settings
+- ✅ App icon polish — depth + gradient + refined leaf
+- ✅ Marketing landing page at GitHub Pages
+
+---
+
+## v0.6 — Live Photo conversion and basket hygiene (in progress)
+
+- ✅ Live Photo convert-to-still action (keep moment, drop sidecar)
+- ✅ Dashboard auto-refresh on photo library change
+- ✅ Recent sessions list in Settings
+- ✅ Correct `ReviewBasket.Source` assignments per module
+- 🟡 Empty-state polish across modules
+- 🟡 In-app help / "How Bide works" explainer
+- 🟡 Recent-capture (<30d) soft badge on Large Videos, Screen Recordings, Live Photos
+
+---
+
+## v1.1 — First public update (after v1.0 approval)
+
+Everything shipped in v0.2 through v0.6 plus:
+
+- App Store screenshot refresh with v0.5+ modules visible
+- "What's new" copy for App Store Connect
+- Optional: BG scheduler for nightly pre-scan refresh
 
 ---
 

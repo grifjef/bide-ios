@@ -171,6 +171,8 @@ private struct VideoRow: View {
                         Label(video.isFavorite ? "Favorite — protected" : "Hidden — protected", systemImage: "heart.fill")
                             .font(.caption2.weight(.medium))
                             .foregroundStyle(BideTheme.warning)
+                    } else if video.isRecentCapture() {
+                        RecentCaptureBadge()
                     }
                 }
 

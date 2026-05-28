@@ -178,6 +178,8 @@ private struct ScreenRecordingRow: View {
                         Label(recording.isFavorite ? "Favorite — protected" : "Hidden — protected", systemImage: "heart.fill")
                             .font(.caption2.weight(.medium))
                             .foregroundStyle(BideTheme.warning)
+                    } else if recording.isRecentCapture() {
+                        RecentCaptureBadge()
                     }
                 }
 

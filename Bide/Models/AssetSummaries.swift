@@ -1,5 +1,22 @@
 import Foundation
 
+/// Conservative-defaults helper shared by every value type whose UI surfaces
+/// a "recent capture" affordance. Photos taken within the last `days` show a
+/// soft warning so the user thinks twice — they're still selectable, this is
+/// information not a barrier.
+enum RecencyRule {
+    /// Default 30-day window — same as the hard recency protection used in
+    /// Screenshots and Blurry Shots, and the App Store recovery window.
+    static let defaultDays: Int = 30
+
+    static func isRecent(_ date: Date?, now: Date = Date(), days: Int = defaultDays) -> Bool {
+        guard let date else { return false }
+        let interval = now.timeIntervalSince(date)
+        let windowSeconds = TimeInterval(days) * 86_400
+        return interval >= 0 && interval < windowSeconds
+    }
+}
+
 /// Lightweight value type for large-video review. Doesn't carry PHAsset reference
 /// so it's Sendable and free to pass across actor boundaries / SwiftUI views.
 struct LargeVideoSummary: Identifiable, Hashable, Sendable {
@@ -44,6 +61,13 @@ struct LargeVideoSummary: Identifiable, Hashable, Sendable {
     /// (favorites and hidden items are never auto-selectable).
     var isProtected: Bool {
         isFavorite || isHidden
+    }
+
+    /// True if the capture happened recently enough to deserve a soft
+    /// "recent capture" badge in the UI. Recency is a *signal*, not a
+    /// block — the user can still select recent items.
+    func isRecentCapture(now: Date = Date()) -> Bool {
+        RecencyRule.isRecent(creationDate, now: now)
     }
 }
 
@@ -91,6 +115,12 @@ struct LivePhotoSummary: Identifiable, Hashable, Sendable {
 
     var isProtected: Bool {
         isFavorite || isHidden
+    }
+
+    /// True if the capture happened recently enough to deserve a soft
+    /// "recent capture" badge in the UI.
+    func isRecentCapture(now: Date = Date()) -> Bool {
+        RecencyRule.isRecent(creationDate, now: now)
     }
 }
 

@@ -290,6 +290,8 @@ private struct LivePhotoRow: View {
                         )
                         .font(.caption2.weight(.medium))
                         .foregroundStyle(BideTheme.warning)
+                    } else if live.isRecentCapture() {
+                        RecentCaptureBadge()
                     }
                 }
 

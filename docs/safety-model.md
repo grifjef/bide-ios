@@ -51,7 +51,12 @@ A `✓` means "items matching this signal are auto-protected in this module" —
 
 ## Recency rule
 
-`creationDate` within the last 30 days is protected in any module that uses it. The threshold is one configurable constant in two places (`ScreenshotsViewModel.recencyThreshold` and `BlurryShotsScanService.recencyThreshold`) — both default to 30 days.
+`creationDate` within the last 30 days is protected or flagged in every module that uses it. The single source of truth is `RecencyRule.isRecent(_:now:days:)` in `Bide/Models/AssetSummaries.swift`. Modules use it in two flavors:
+
+- **Hard protection** (Screenshots, Blurry Shots): the row is rendered with a "protected — too recent" badge and the selection control is disabled. The user can't add it to the basket.
+- **Soft signal** (Large Videos, Screen Recordings, Live Photos): the row shows the shared `RecentCaptureBadge` view as information. The user can still select — they're choosing to remove a 5GB video they shot yesterday, that's their call — but they see the badge first and can pause.
+
+The split exists because the spec calls for conservatism without removing agency. Hiding a 4K video from yesterday entirely would be paternalistic; showing it without a flag would be uncalibrated.
 
 Rationale (per spec §14): users often clear screenshots / blurry shots from their pre-30-day backlog but might still need a recent one for something active (receipt verification, sharing). We err on the side of keeping the recent one.
 

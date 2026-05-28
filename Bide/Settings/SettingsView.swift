@@ -14,6 +14,21 @@ struct SettingsView: View {
     /// summary line so the list stays a glanceable history, not an archive.
     private static let recentSessionLimit = 10
 
+    /// Public link Bide points at when the user shares. Falls back to the
+    /// repo for now; switches to bidephoto.com once the App Store v1.0
+    /// goes live and the marketing domain is in DNS.
+    private static let shareURL = URL(string: "https://github.com/grifjef/bide-ios")!
+
+    /// Personalized share copy. Includes the user's lifetime number when
+    /// they've actually done something with the app — turns a generic plug
+    /// into a small flex without exposing anything beyond a byte count.
+    private var shareMessage: String {
+        if lifetime.bytes > 0 {
+            return "Bide just helped me free up \(lifetime.formattedBytes) on my iPhone. It's a calm, on-device photo declutter app — no ads, no account, no tracking."
+        }
+        return "Bide: a calm, on-device photo declutter app for iPhone. No ads, no account, no tracking. Worth a look."
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -92,6 +107,21 @@ struct SettingsView: View {
                     Text("Transparency")
                 } footer: {
                     Text("See Apple's MetricKit reports about Bide's behavior on your device. Nothing is transmitted.")
+                        .font(BideTheme.caption())
+                }
+
+                Section {
+                    ShareLink(
+                        item: Self.shareURL,
+                        subject: Text("Bide — Camera Roll Review"),
+                        message: Text(shareMessage)
+                    ) {
+                        Label("Share Bide with a friend", systemImage: "square.and.arrow.up")
+                    }
+                } header: {
+                    Text("Spread the calm")
+                } footer: {
+                    Text("If Bide helped you, telling a friend is the entire growth model. No ads, no referral codes, no tracking — just the link.")
                         .font(BideTheme.caption())
                 }
 

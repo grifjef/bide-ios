@@ -25,12 +25,12 @@ Counts: 25 characters ✓
 ## Keywords (100 char limit, comma-separated, no spaces after commas)
 
 ```
-photo declutter,camera roll,delete photos,duplicate photos,large videos,screenshots,no ads,private
+photo declutter,camera roll,duplicate photos,large videos,screenshots,live photos,no ads,private
 ```
 
-Counts: ~95 characters ✓
+Counts: ~96 characters ✓
 
-(Notes on choices: leans into anti-cleaner-app positioning with "no ads,private"; covers the main user-search intents — "photo declutter", "camera roll", "duplicate photos", "delete photos"; includes "large videos" and "screenshots" since those are our shipped modules; avoids the category-poisoned terms "cleaner", "booster", "optimizer".)
+(Notes on choices: leans into anti-cleaner-app positioning with "no ads,private"; covers the main user-search intents — "photo declutter", "camera roll", "duplicate photos"; surfaces three shipped modules with distinctive search terms — "large videos", "screenshots", "live photos"; avoids the category-poisoned terms "cleaner", "booster", "optimizer". "delete photos" was dropped in favor of "live photos" since "duplicate photos" + "photo declutter" already carry the delete intent.)
 
 ## Description (4000 char limit, plain text — no markup)
 
@@ -40,10 +40,14 @@ Bide is a calm, private photo declutter app for iPhone. The name means "to dwell
 No ads. No account. No subscription. No cloud upload by us.
 
 WHAT BIDE FINDS
-• Large videos sitting in your camera roll — sorted biggest first, so a few minutes of review can free gigabytes
-• Old screenshots — easy to bulk-review by date
-• (Coming soon) Similar photo groups — near-duplicates clustered for thoughtful side-by-side comparison
-• (Coming soon) Blurry shots — never auto-suggested, always for you to decide
+• Exact duplicates — byte-for-byte identical copies, found in seconds
+• Screen recordings — usually the biggest disposable files in your library
+• Large videos — sorted biggest first, so a few minutes can free gigabytes
+• Screenshots — grouped by month and year, sortable by chat / app / visual
+• Live Photos — convert any to a still and reclaim its ~40% video sidecar
+• Similar photos — near-duplicates clustered with a suggested keeper, and the reason why
+• Blurry shots — conservative candidates only; photos with faces are excluded
+• On this day — photos from today's calendar date in past years
 
 EVERYTHING IS REVERSIBLE
 Bide never permanently deletes anything. When you choose to remove an item, it goes to Apple's "Recently Deleted" album in Photos, where you have 30 days to restore it. No surprises.

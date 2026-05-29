@@ -64,10 +64,15 @@ final class ReviewBasket {
     func add(_ item: Item) {
         guard !contains(localIdentifier: item.id) else { return }
         items.append(item)
+        BideHaptics.selection()
     }
 
     func remove(localIdentifier: String) {
+        let removedSomething = items.contains { $0.id == localIdentifier }
         items.removeAll { $0.id == localIdentifier }
+        if removedSomething {
+            BideHaptics.selection()
+        }
     }
 
     func clear() {

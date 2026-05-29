@@ -19,6 +19,12 @@ struct SessionSummaryView: View {
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 76, weight: .light))
                 .foregroundStyle(BideTheme.primary)
+                .onAppear {
+                    // One-shot success haptic on the celebration view's
+                    // first appearance. Gated against Reduce Motion
+                    // inside BideHaptics.
+                    BideHaptics.success()
+                }
 
             VStack(spacing: BideTheme.s) {
                 Text(session.formattedBytes)

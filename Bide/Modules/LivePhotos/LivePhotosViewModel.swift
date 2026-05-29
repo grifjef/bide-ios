@@ -78,16 +78,19 @@ final class LivePhotosViewModel {
                 localIdentifier: live.localIdentifier,
                 bytesReclaimed: result.bytesReclaimedEstimate
             )
+            BideHaptics.success()
         } catch let error as PhotoLibraryService.LivePhotoConversionError {
             conversionState = .failed(
                 localIdentifier: live.localIdentifier,
                 message: error.errorDescription ?? "Conversion failed."
             )
+            BideHaptics.warning()
         } catch {
             conversionState = .failed(
                 localIdentifier: live.localIdentifier,
                 message: error.localizedDescription
             )
+            BideHaptics.warning()
         }
     }
 }

@@ -22,6 +22,9 @@ struct DashboardView: View {
     /// Survives kills, so fresh-install users see it exactly once.
     @AppStorage("bide.didDismissFirstRunNudge") private var didDismissFirstRunNudge: Bool = false
 
+    /// Latest storage reading. Re-read on appear + scenePhase active.
+    @State private var storageSnapshot: StorageHealth.Snapshot?
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -40,6 +43,14 @@ struct DashboardView: View {
                         firstRunNudge
                     }
 
+                    // Calm "your library is clean" panel when every module
+                    // currently reports zero. Sits between the nudge and
+                    // the On This Day callout so it's the first thing the
+                    // eye lands on for a settled library.
+                    if shouldShowEmptyLibraryPanel {
+                        emptyLibraryPanel
+                    }
+
                     // On This Day callout — only shown when there are
                     // photos from this day in past years
                     if let s = summary.onThisDay, s.totalCount > 0 {
@@ -56,6 +67,7 @@ struct DashboardView: View {
                     cleanupSection
                     memoryReviewSection
 
+                    storageHealthLine
                     freshnessPill
                 }
                 .padding(BideTheme.m)
@@ -102,6 +114,7 @@ struct DashboardView: View {
                 summary.refreshIfNeeded()
                 evaluateWhatsNew()
                 consumeShortcut()
+                storageSnapshot = StorageHealth.snapshot()
             }
             .onChange(of: appState.pendingShortcut) { _, _ in
                 consumeShortcut()
@@ -379,6 +392,67 @@ struct DashboardView: View {
     }
 
     /// Subtle pill at the bottom of the dashboard reporting scan freshness.
+    /// True when every module Bide knows about returns zero results AND
+    /// we have a non-pre-scan snapshot. Don't show before the first scan
+    /// completes — that would race the data.
+    private var shouldShowEmptyLibraryPanel: Bool {
+        guard photoLibrary.hasReadAccess else { return false }
+        guard let lv = summary.largeVideos,
+              let sr = summary.screenRecordings,
+              let ss = summary.screenshots,
+              let du = summary.duplicates,
+              let lp = summary.livePhotos
+        else { return false }
+        let onThisDayCount = summary.onThisDay?.totalCount ?? 0
+        return lv.isEmpty
+            && sr.isEmpty
+            && ss.isEmpty
+            && du.isEmpty
+            && lp.isEmpty
+            && onThisDayCount == 0
+    }
+
+    /// Calm panel surfaced when nothing across any module wants attention.
+    /// Tone: "all good, no urgency, come back tomorrow."
+    private var emptyLibraryPanel: some View {
+        VStack(alignment: .leading, spacing: BideTheme.s) {
+            HStack(spacing: BideTheme.s) {
+                Image(systemName: "leaf.fill")
+                    .foregroundStyle(BideTheme.primary)
+                Text("Your library is calm")
+                    .font(BideTheme.cardTitle())
+            }
+            Text("Nothing here needs attention right now. Take a breath. Come back tomorrow and the On This Day card may have something to revisit.")
+                .font(BideTheme.caption())
+                .foregroundStyle(BideTheme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .bideCard()
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Single-line "X.X GB free of Y.YY GB" reading pulled from the
+    /// volume's `URLResourceValues`. Hidden when StorageHealth couldn't
+    /// resolve a snapshot (rare — usually only in test contexts).
+    @ViewBuilder
+    private var storageHealthLine: some View {
+        if let snapshot = storageSnapshot {
+            HStack(spacing: BideTheme.xs) {
+                Image(systemName: "internaldrive")
+                    .imageScale(.small)
+                    .foregroundStyle(BideTheme.textTertiary)
+                Text("\(snapshot.formattedFree) free of \(snapshot.formattedTotal)")
+                    .font(BideTheme.caption())
+                    .foregroundStyle(BideTheme.textTertiary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, BideTheme.s)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Storage: \(snapshot.formattedFree) free of \(snapshot.formattedTotal)")
+        }
+    }
+
     /// Shows "Refreshing…" while a scan is in flight (including the auto-
     /// triggered post-library-change scan) and "Updated N min ago" when
     /// quiet. Designed to be reassuring without being noisy — small font,

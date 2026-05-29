@@ -112,10 +112,6 @@ schemes:
         - BideUITests
     run:
       config: Debug
-      # Local StoreKit configuration — picks up the three tip-jar
-      # non-consumables defined in Bide/Bide.storekit so the sim can
-      # exercise the TipJarView purchase flow without App Store Connect.
-      storeKitConfiguration: Bide/Bide.storekit
     archive:
       config: Release
     profile:

@@ -136,3 +136,34 @@ xcrun simctl io booted screenshot ~/Desktop/bide-shot-1.png
 - One Dark Mode shot.
 - No iCloud "needs download" placeholders visible (all thumbnails loaded).
 - No personally identifiable photos in any frame.
+
+---
+
+## v1.2 captured chrome (assets/screenshots-v1.2/)
+
+Real simulator captures of the screens that do not require photo-library
+content, taken via the `ScreenshotCaptureTests` XCUITest with the
+status bar overridden to 9:41 / full signal:
+
+- `01-dashboard.png` — dashboard with section grouping, module cards, Beta badges (shows the honest "Photo access needed" banner since the sim has no granted authorization)
+- `02-settings.png` — privacy promises, permissions, Help, Transparency, Spread the calm
+- `03-how-bide-works.png` — the in-app explainer
+
+**Still needed for the App Store marketing set** (the six shots specced
+above): a simulator (or device) with a seeded, authorized photo library
+so the modules show real cluster/duplicate/large-video content, plus the
+Figma overlay-text pipeline. Those are a design pass, not a code task —
+the captures here prove the chrome renders correctly and give a starting
+point.
+
+To refresh these captures:
+
+```bash
+xcodebuild test -scheme Bide \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -only-testing:BideUITests/ScreenshotCaptureTests \
+  -resultBundlePath /tmp/bide-shots.xcresult
+xcrun xcresulttool export attachments --path /tmp/bide-shots.xcresult \
+  --output-path /tmp/bide-attachments
+# then copy the named PNGs from the manifest into assets/screenshots-v1.2/
+```

@@ -217,6 +217,14 @@ struct DashboardView: View {
         return "Group and review old screenshots."
     }
 
+    /// Module cards are disabled until photo access is granted — except
+    /// under XCUITest, where we keep them tappable so navigation smoke
+    /// tests can reach each module screen (the sim has no photos, so the
+    /// modules show their genuine empty states).
+    private var modulesDisabled: Bool {
+        !photoLibrary.hasReadAccess && !UITestMode.isActive
+    }
+
     // MARK: - Sections
 
     private var quickWinsSection: some View {
@@ -230,12 +238,12 @@ struct DashboardView: View {
                     icon: "doc.on.doc.fill",
                     title: "Exact duplicates",
                     subtitle: duplicatesSubtitle,
-                    disabled: !photoLibrary.hasReadAccess,
+                    disabled: modulesDisabled,
                     badge: "Beta"
                 )
             }
             .buttonStyle(.plain)
-            .disabled(!photoLibrary.hasReadAccess)
+            .disabled(modulesDisabled)
 
             NavigationLink {
                 ScreenRecordingsView()
@@ -244,12 +252,12 @@ struct DashboardView: View {
                     icon: "record.circle.fill",
                     title: "Screen recordings",
                     subtitle: screenRecordingsSubtitle,
-                    disabled: !photoLibrary.hasReadAccess,
+                    disabled: modulesDisabled,
                     badge: "Beta"
                 )
             }
             .buttonStyle(.plain)
-            .disabled(!photoLibrary.hasReadAccess)
+            .disabled(modulesDisabled)
 
             NavigationLink {
                 LargeVideosView()
@@ -262,7 +270,7 @@ struct DashboardView: View {
                 )
             }
             .buttonStyle(.plain)
-            .disabled(!photoLibrary.hasReadAccess)
+            .disabled(modulesDisabled)
         }
     }
 
@@ -281,7 +289,7 @@ struct DashboardView: View {
                 )
             }
             .buttonStyle(.plain)
-            .disabled(!photoLibrary.hasReadAccess)
+            .disabled(modulesDisabled)
 
             NavigationLink {
                 LivePhotosView()
@@ -290,12 +298,12 @@ struct DashboardView: View {
                     icon: "livephoto",
                     title: "Live Photos",
                     subtitle: livePhotosSubtitle,
-                    disabled: !photoLibrary.hasReadAccess,
+                    disabled: modulesDisabled,
                     badge: "Beta"
                 )
             }
             .buttonStyle(.plain)
-            .disabled(!photoLibrary.hasReadAccess)
+            .disabled(modulesDisabled)
         }
     }
 
@@ -313,12 +321,12 @@ struct DashboardView: View {
                     icon: "square.on.square.dashed",
                     title: "Similar photos",
                     subtitle: "Clusters of near-duplicates with a suggested keeper.",
-                    disabled: !photoLibrary.hasReadAccess,
+                    disabled: modulesDisabled,
                     badge: "Beta"
                 )
             }
             .buttonStyle(.plain)
-            .disabled(!photoLibrary.hasReadAccess)
+            .disabled(modulesDisabled)
 
             NavigationLink {
                 BlurryShotsView()
@@ -327,12 +335,12 @@ struct DashboardView: View {
                     icon: "scribble.variable",
                     title: "Blurry shots",
                     subtitle: "Candidates only — never auto-suggested.",
-                    disabled: !photoLibrary.hasReadAccess,
+                    disabled: modulesDisabled,
                     badge: "Beta"
                 )
             }
             .buttonStyle(.plain)
-            .disabled(!photoLibrary.hasReadAccess)
+            .disabled(modulesDisabled)
         }
     }
 
@@ -551,6 +559,7 @@ struct DashboardView: View {
             HStack {
                 Image(systemName: "exclamationmark.circle.fill")
                     .foregroundStyle(BideTheme.warning)
+                    .accessibilityHidden(true) // decorative; the text carries the meaning
                 Text("Photo access needed")
                     .font(BideTheme.cardTitle())
             }

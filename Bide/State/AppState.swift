@@ -22,7 +22,14 @@ final class AppState {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        self.phase = defaults.bool(forKey: Self.onboardingKey) ? .ready : .onboarding
+        // Under XCUITest, skip onboarding so the dashboard is reachable
+        // for navigation smoke tests without driving the system photo
+        // permission dialog.
+        if UITestMode.isActive {
+            self.phase = .ready
+        } else {
+            self.phase = defaults.bool(forKey: Self.onboardingKey) ? .ready : .onboarding
+        }
     }
 
     /// Wire `NotificationCenter` to flip `pendingShortcut` when the app

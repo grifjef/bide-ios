@@ -35,14 +35,18 @@ targets:
       - path: Bide
         excludes:
           - "**/*.md"
+      - path: BideShared
     resources:
       - path: Bide/Assets.xcassets
         optional: true
+    dependencies:
+      - target: BideWidget
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.bidephoto.bide
         PRODUCT_NAME: Bide
         GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_ENTITLEMENTS: Bide/Bide.entitlements
         DEVELOPMENT_ASSET_PATHS: '"Bide/Preview Content"'
         ENABLE_PREVIEWS: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -69,12 +73,39 @@ targets:
         INFOPLIST_KEY_BGTaskSchedulerPermittedIdentifiers:
           - com.bidephoto.bide.dashboardRefresh
 
+  BideWidget:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: BideWidget
+        excludes:
+          - "Info.plist"
+      - path: BideShared
+    resources:
+      - path: Bide/Assets.xcassets
+        optional: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.bidephoto.bide.widget
+        PRODUCT_NAME: BideWidget
+        # Explicit Info.plist (not generated) because WidgetKit extensions
+        # need the nested NSExtension > NSExtensionPointIdentifier dict,
+        # which INFOPLIST_KEY_* flattens incorrectly.
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: BideWidget/Info.plist
+        CODE_SIGN_ENTITLEMENTS: BideWidget/BideWidget.entitlements
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        TARGETED_DEVICE_FAMILY: "1"
+        SKIP_INSTALL: NO
+
   BideTests:
     type: bundle.unit-test
     platform: iOS
     deploymentTarget: "17.0"
     sources:
       - path: BideTests
+      - path: BideShared
     dependencies:
       - target: Bide
     settings:

@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import WidgetKit
 
 /// CRUD for `ReclaimSession` plus the small aggregates the UI needs (lifetime
 /// totals, recent sessions). Like `IndexedAssetStore`, this is the only thing
@@ -47,7 +48,31 @@ final class ReclaimHistoryStore {
         )
         modelContext.insert(session)
         try modelContext.save()
+
+        // Mirror the new lifetime totals into the App Group store and ask
+        // WidgetKit to reload, so the Home Screen / Lock Screen widgets
+        // reflect this session without waiting for the next hourly refresh.
+        // Both calls are best-effort — a widget that lags one update is
+        // never worth failing the delete path over.
+        publishWidgetSnapshot()
         return session
+    }
+
+    /// Recompute lifetime totals and push them to the widget's shared
+    /// store. Called after every `record`. Reads are cheap (session count
+    /// is small) and this keeps the widget single-sourced from SwiftData.
+    private func publishWidgetSnapshot() {
+        guard let totals = try? lifetimeTotals() else { return }
+        let lastAt = (try? fetchAll())?.first?.completedAt
+        WidgetSharedStore.write(
+            WidgetSharedData(
+                lifetimeBytes: totals.bytes,
+                sessionCount: totals.sessionCount,
+                itemCount: totals.itemCount,
+                lastSessionAt: lastAt
+            )
+        )
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     // MARK: - Reads

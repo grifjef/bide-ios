@@ -1,8 +1,10 @@
+import CoreSpotlight
 import UIKit
 
 /// Tiny `UIApplicationDelegate` bridge for the things SwiftUI's `App`
-/// protocol doesn't expose cleanly yet — currently just home-screen
-/// Quick Actions registration and delivery.
+/// protocol doesn't expose cleanly yet — Quick Actions registration
+/// and delivery, Spotlight indexing on cold launch, and the
+/// continue-user-activity continuation for Spotlight taps.
 ///
 /// Bound via `@UIApplicationDelegateAdaptor(BideAppDelegate.self)` in
 /// `BideApp`. Keep this file small; reach for it only when the system
@@ -32,6 +34,40 @@ final class BideAppDelegate: NSObject, UIApplicationDelegate {
         // Stash for `BideApp` to consume.
         if let shortcut = launchOptions?[.shortcutItem] as? UIApplicationShortcutItem {
             coldLaunchShortcut = shortcut
+        }
+
+        // Refresh the Spotlight index. Idempotent — Spotlight dedupes on
+        // uniqueIdentifier — so re-running on every cold launch keeps
+        // copy edits propagating without a one-shot migration.
+        Task { @MainActor in
+            BideSpotlightIndexer.indexAll()
+        }
+        return true
+    }
+
+    /// Continuation path: user tapped a Bide result in Spotlight.
+    /// `userActivity.uniqueIdentifier` carries the same value we used in
+    /// `CSSearchableItem.uniqueIdentifier`, so decoding the right
+    /// destination is a single dictionary lookup.
+    func application(
+        _ application: UIApplication,
+        continue userActivity: NSUserActivity,
+        restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
+    ) -> Bool {
+        guard userActivity.activityType == CSSearchableItemActionType,
+              let identifier = userActivity.userInfo?[CSSearchableItemActivityIdentifier] as? String
+        else { return false }
+
+        // Map back to a ShortcutAction when the Spotlight result is one of
+        // the three we already deep-link from Quick Actions. Anything else
+        // just opens Bide — the dashboard is the right landing for those.
+        if let module = ModuleSpotlight(rawValue: identifier),
+           let action = module.equivalentShortcut {
+            NotificationCenter.default.post(
+                name: .bideShortcutAction,
+                object: nil,
+                userInfo: ["action": action]
+            )
         }
         return true
     }

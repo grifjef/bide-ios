@@ -18,8 +18,8 @@ import Foundation
 // MARK: - Intent: Find clutter
 
 struct FindClutterIntent: AppIntent {
-    static var title: LocalizedStringResource = "Find clutter"
-    static var description = IntentDescription(
+    static let title: LocalizedStringResource = "Find clutter"
+    static let description = IntentDescription(
         "Open Bide and refresh the dashboard so the latest cleanup candidates appear."
     )
     static let openAppWhenRun: Bool = true
@@ -33,8 +33,8 @@ struct FindClutterIntent: AppIntent {
 // MARK: - Intent: On this day
 
 struct OnThisDayIntent: AppIntent {
-    static var title: LocalizedStringResource = "On this day in Bide"
-    static var description = IntentDescription(
+    static let title: LocalizedStringResource = "On this day in Bide"
+    static let description = IntentDescription(
         "Open Bide to the On This Day list — photos taken on today's calendar day in past years."
     )
     static let openAppWhenRun: Bool = true
@@ -48,8 +48,8 @@ struct OnThisDayIntent: AppIntent {
 // MARK: - Intent: Review basket
 
 struct ReviewBasketIntent: AppIntent {
-    static var title: LocalizedStringResource = "Open Review Basket"
-    static var description = IntentDescription(
+    static let title: LocalizedStringResource = "Open Review Basket"
+    static let description = IntentDescription(
         "Open Bide directly into the Review Basket so you can confirm or back out of items you've selected."
     )
     static let openAppWhenRun: Bool = true

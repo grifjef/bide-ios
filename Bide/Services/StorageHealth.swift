@@ -12,7 +12,6 @@ import Foundation
 ///     "Available."
 ///   - `.volumeTotalCapacityKey` — denominator. Fixed per device.
 enum StorageHealth {
-
     struct Snapshot: Equatable, Sendable {
         let freeBytes: Int64
         let totalBytes: Int64

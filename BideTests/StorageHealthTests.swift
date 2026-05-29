@@ -6,7 +6,6 @@ import XCTest
 /// real filesystem state — but the math + formatting on a snapshot is
 /// trivially pinnable.
 final class StorageHealthTests: XCTestCase {
-
     func test_usedBytesEqualsTotalMinusFree() {
         let snap = StorageHealth.Snapshot(
             freeBytes: 100_000_000_000,

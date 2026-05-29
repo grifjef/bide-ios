@@ -8,7 +8,6 @@ import UIKit
 /// `BideApp`. Keep this file small; reach for it only when the system
 /// requires `UIApplicationDelegate` semantics specifically.
 final class BideAppDelegate: NSObject, UIApplicationDelegate {
-
     /// Set when iOS launches Bide directly from a Quick Action tap. Drained
     /// by `BideApp` on first scene activation.
     var coldLaunchShortcut: UIApplicationShortcutItem?

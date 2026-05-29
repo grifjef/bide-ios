@@ -6,7 +6,6 @@ import XCTest
 /// caught early — a stale shortcut on a user's springboard would stop
 /// matching if we lost a raw value.
 final class ShortcutActionTests: XCTestCase {
-
     func test_rawValuesAreStable() {
         XCTAssertEqual(ShortcutAction.findClutter.rawValue, "com.bidephoto.bide.shortcut.findClutter")
         XCTAssertEqual(ShortcutAction.onThisDay.rawValue, "com.bidephoto.bide.shortcut.onThisDay")

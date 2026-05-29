@@ -17,7 +17,6 @@ import UIKit
 /// term — keeping them alive holds the Taptic engine warm and drains
 /// battery measurably.
 enum BideHaptics {
-
     /// Light tap — used for selection toggles in module rows and basket
     /// add/remove. The most common Bide haptic.
     static func selection() {

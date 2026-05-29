@@ -12,6 +12,10 @@ struct SessionSummaryView: View {
     let session: ReviewBasketView.CompletionSummary
     let onDone: () -> Void
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var sealScale: CGFloat = 0.6
+    @State private var sealOpacity: Double = 0.0
+
     var body: some View {
         VStack(spacing: BideTheme.l) {
             Spacer()
@@ -19,11 +23,23 @@ struct SessionSummaryView: View {
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 76, weight: .light))
                 .foregroundStyle(BideTheme.primary)
+                .scaleEffect(sealScale)
+                .opacity(sealOpacity)
                 .onAppear {
-                    // One-shot success haptic on the celebration view's
-                    // first appearance. Gated against Reduce Motion
-                    // inside BideHaptics.
+                    // One-shot success haptic + a small spring on first
+                    // appear. Both gated against Reduce Motion — when off,
+                    // the seal renders at full scale immediately with no
+                    // animation.
                     BideHaptics.success()
+                    if reduceMotion {
+                        sealScale = 1.0
+                        sealOpacity = 1.0
+                    } else {
+                        withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) {
+                            sealScale = 1.0
+                            sealOpacity = 1.0
+                        }
+                    }
                 }
 
             VStack(spacing: BideTheme.s) {

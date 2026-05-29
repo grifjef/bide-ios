@@ -75,21 +75,32 @@ struct BlurryShotsView: View {
     // MARK: - States
 
     private func scanningState(progress: Double, label: String, scan: BlurryShotsScanService) -> some View {
-        VStack(spacing: BideTheme.m) {
-            ProgressView(value: progress)
-                .progressViewStyle(.linear)
-                .tint(BideTheme.accent)
-                .padding(.horizontal, BideTheme.xl)
-            Text(label)
-                .font(BideTheme.body())
-                .foregroundStyle(BideTheme.textSecondary)
-            Button("Cancel scan") { scan.cancel() }
-                .font(BideTheme.caption())
-                .foregroundStyle(BideTheme.textTertiary)
-                .padding(.top, BideTheme.m)
+        ScrollView {
+            VStack(spacing: BideTheme.m) {
+                VStack(spacing: BideTheme.s) {
+                    ProgressView(value: progress)
+                        .progressViewStyle(.linear)
+                        .tint(BideTheme.accent)
+                    Text(label)
+                        .font(BideTheme.caption())
+                        .foregroundStyle(BideTheme.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    Button("Cancel scan") { scan.cancel() }
+                        .font(BideTheme.caption())
+                        .foregroundStyle(BideTheme.textTertiary)
+                }
+                .padding(BideTheme.m)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .bideCard()
+
+                SkeletonRowStack(count: 4)
+            }
+            .padding(BideTheme.m)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(BideTheme.l)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Scanning your library for blurry shots")
+        .accessibilityValue("\(Int(progress * 100))% complete")
     }
 
     private func cancelledState(scan: BlurryShotsScanService) -> some View {

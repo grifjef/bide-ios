@@ -140,6 +140,11 @@ struct SettingsView: View {
                     Link(destination: URL(string: "https://github.com/grifjef/bide-ios")!) {
                         Label("Source on GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
                     }
+                    NavigationLink {
+                        AcknowledgementsView()
+                    } label: {
+                        Label("Acknowledgements", systemImage: "doc.plaintext")
+                    }
                 } header: {
                     Text("About")
                 }

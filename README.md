@@ -1,5 +1,10 @@
 # Bide: Camera Roll Review
 
+[![CI](https://github.com/grifjef/bide-ios/actions/workflows/ci.yml/badge.svg)](https://github.com/grifjef/bide-ios/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](./LICENSE)
+[![Platform](https://img.shields.io/badge/iOS-17%2B-lightgrey.svg)](https://www.apple.com/ios/)
+[![Swift](https://img.shields.io/badge/Swift-5.10-orange.svg)](https://swift.org)
+
 > **Bide your time. Keep what matters.**
 > A private, on-device photo review app for iPhone.
 
@@ -21,12 +26,31 @@ Bide takes the opposite stance: **conservative recommendations, explanations for
 
 ## What it does
 
-- **Large Videos** — find and review the biggest video files first
-- **Screenshots** — group by date, bulk-review old ones safely
-- **Similar Photos** — cluster near-duplicates, suggest a keeper, let you choose
-- **Blurry Shots** — surface possible candidates, never assume
+Eight focused modules, grouped on the dashboard by how much care each needs:
 
-All four feed into a **Review Basket** — nothing deletes until you confirm. Everything moved to deletion lands in Apple's Recently Deleted, recoverable for 30 days.
+**Quick wins**
+- **Exact Duplicates** — byte-for-byte identical copies, found in seconds
+- **Screen Recordings** — usually the biggest disposable files in a library
+- **Large Videos** — sorted by size; favorites and hidden videos protected
+
+**Bulk review**
+- **Screenshots** — grouped by month/year, sortable by chat / app / visual via on-device OCR
+- **Live Photos** — convert any to a still and reclaim its ~40% video sidecar
+
+**Careful review**
+- **Similar Photos** — time-bucketed clusters with a suggested keeper and the reason
+- **Blurry Shots** — conservative candidates; photos with faces are excluded
+- **On This Day** — photos from today's calendar day in past years
+
+Everything feeds into a **Review Basket** — nothing deletes until you confirm, and confirmation is two-step (Bide's prompt, then iOS's). Everything moved lands in Apple's Recently Deleted, recoverable for 30 days.
+
+## Platform integration
+
+- **Home Screen + Lock Screen widgets** show your lifetime reclaim total
+- **App Intents + Siri** — "Find clutter in Bide", "On this day in Bide"
+- **Spotlight** — search "duplicates" or "screen recordings" to jump straight in
+- **Quick Actions** — long-press the icon for Find clutter / On this day / Review basket
+- **Background refresh** keeps the dashboard current overnight
 
 ## What it doesn't do
 
@@ -53,20 +77,24 @@ The only diagnostics involved are Apple's own MetricKit, which you can disable i
 
 If you sync your library through iCloud Photos, Apple controls that — we don't touch it.
 
-Full privacy policy: [docs/privacy-policy.md](./docs/privacy-policy.md) *(coming soon)*
+Full privacy policy: [bidephoto.com/privacy](https://grifjef.github.io/bide-ios/privacy/) (also in [docs/privacy-policy.md](./docs/privacy-policy.md)).
 
 ## Status
 
-🚧 **In active development.** Initial release targeting App Store within ~1 week. See [PLAN.md](./PLAN.md) for the phased delivery plan and [product/spec.md](./product/spec.md) for the full product specification.
+**v1.0 submitted to the App Store** (in review). **v1.1 / v1.2 in active development** on `main` — see [ROADMAP.md](./ROADMAP.md) and [CHANGELOG.md](./CHANGELOG.md). [PLAN.md](./PLAN.md) holds the original phased delivery plan; [product/spec.md](./product/spec.md) is the full product specification.
 
 ## Tech stack
 
-- **Swift 5.10** + **SwiftUI**, iOS 17+
-- **PhotoKit** for photo library access
-- **Vision** for image similarity (feature prints)
-- **SwiftData** for local index
-- **MetricKit** for diagnostics (no third-party SDKs)
-- **XCTest** + **XCUITest** for testing
+- **Swift 5.10** + **SwiftUI**, iOS 17+ (strict concurrency)
+- **PhotoKit** for photo library access (+ `PHCachingImageManager` prewarming)
+- **Vision** for image similarity (feature prints) + face protection
+- **SwiftData** for the local index
+- **WidgetKit** for Home Screen + Lock Screen widgets (App Group shared store)
+- **App Intents** + **CoreSpotlight** for Siri / Shortcuts / Spotlight
+- **BackgroundTasks** (`BGAppRefreshTask`) for overnight refresh
+- **MetricKit** for diagnostics (no third-party SDKs, ever)
+- **XCTest** + **XCUITest** for testing (211 unit + 1 UI)
+- **xcodegen** for the project; **SwiftLint** (strict) in CI
 
 ## Building
 

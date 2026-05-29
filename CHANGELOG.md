@@ -4,6 +4,43 @@ All notable changes to Bide. The format follows [Keep a Changelog](https://keepa
 
 Detailed App Store "What's New" copy and internal change logs live under [`docs/release-notes/`](docs/release-notes/).
 
+## [1.2.0] — In development
+
+> Premium-polish + platform-integration pass on top of 1.1. Ships in the same App Store update once 1.0 is approved. 225 unit + 7 UI tests; CI green.
+
+### Added
+
+- **Home-screen Quick Actions** — long-press the icon for Find clutter / On this day / Review basket.
+- **Haptic feedback** throughout (selection toggles, basket add/remove, session success, Live Photo conversion).
+- **Per-module Help** — a "?" toolbar button on every module opens How Bide Works.
+- **Skeleton scan progress** in Similar Photos and Blurry Shots.
+- **Session-complete celebration** — spring + haptic on the summary seal (Reduce-Motion gated).
+- **Empty-library dashboard state** — a calm "your library is calm" panel.
+- **Storage health line** — "X GB free of Y GB" on the dashboard.
+- **Custom launch screen** — solid brand color.
+- **App Intents** — Siri / Shortcuts for the three core actions.
+- **Spotlight indexing** — modules + Help sections searchable.
+- **Home Screen widget** (small + medium) and **Lock Screen widgets** (circular / inline / rectangular) showing lifetime reclaim, via an App Group shared store.
+- **Localization scaffolding** — String Catalog with build-time auto-extraction.
+- **In-app Acknowledgements** page (zero third-party deps) + README refresh.
+- **Performance + memory benchmarks** (10k synthetic library), **per-module UI navigation tests**, **automated accessibility audit**, and **view render smoke tests**.
+- **One-command TestFlight script** (`scripts/archive-and-upload.sh`).
+
+### Changed
+
+- `PhotoLibraryService` thumbnail requests route through a shared `PHCachingImageManager` (prewarming extended to Similar Photos + Blurry Shots).
+- Accessibility fix: the permission-banner icon no longer leaks its SF Symbol name to VoiceOver (caught by the new audit).
+
+### Removed
+
+- A tip-jar IAP was built, then **cut** before release — Bide stays pure-free with no in-app purchases.
+
+### Known follow-ups
+
+- Contrast review against the warm palette (audit flags tertiary text).
+- Seeded-library marketing screenshots + overlay pipeline.
+- App Group `group.com.bidephoto.bide` portal registration (widget needs it on device).
+
 ## [1.1.0] — In TestFlight prep
 
 > Marketing version `1.1.0`, build `2`.

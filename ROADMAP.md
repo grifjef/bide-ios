@@ -1,9 +1,46 @@
 # Bide roadmap
 
-> **Last updated:** 2026-05-28
-> **Live status:** v0.1 (build 1) submitted to Apple as v1.0, **Waiting for Review**. v0.6 development in progress on `main` toward a v1.1 update.
+> **Last updated:** 2026-05-29
+> **Live status:** v1.0 (build 1) **Waiting for Review** at Apple. v1.1 + v1.2 work shipped on `main`, going out as one update once v1.0 is approved.
 
-This is the prioritized backlog after the v0.1 submission. Items are grouped by the version they'll ship in, then by priority within each version. **All v0.2 through v0.6 items shipped on `main`** ahead of the Apple decision — that work goes out as v1.1 once v1.0 is approved.
+This is the prioritized backlog after the v0.1 submission. Items are grouped by the version they'll ship in. **Everything through v1.2 is shipped on `main`** ahead of the Apple decision.
+
+---
+
+## v1.2 — Premium polish + platform integration ✅
+
+Shipped on `main` (CI green, 225 unit + 7 UI tests). A 24-step pass to make Bide feel native and full-featured on day one.
+
+**Polish**
+- ✅ Home-screen Quick Actions (Find clutter / On this day / Review basket)
+- ✅ Haptics throughout (selection, basket, session success, convert)
+- ✅ Per-module Help toolbar shortcut
+- ✅ Skeleton scan progress (Similar Photos, Blurry Shots)
+- ✅ Session-complete celebration micro-animation (Reduce-Motion gated)
+- ✅ Empty-library "your library is calm" dashboard state
+- ✅ iOS storage health line on the dashboard
+- ✅ Custom solid-brand launch screen
+
+**Platform integration**
+- ✅ App Intents — Siri / Shortcuts for the three core actions
+- ✅ Spotlight indexing — modules + Help sections searchable
+- ✅ Home Screen widget (small + medium) — lifetime reclaim
+- ✅ Lock Screen accessory widgets (circular / inline / rectangular)
+- 🚫 Tip jar — built then **cut** (kept Bide pure-free, no IAP)
+
+**Quality + release**
+- ✅ Localization scaffolding (String Catalog, auto-extraction)
+- ✅ LICENSE + in-app Acknowledgements; README refresh
+- ✅ 10k synthetic performance + memory benchmarks
+- ✅ Per-module UI navigation tests + automated accessibility audit
+- ✅ View render smoke tests (ImageRenderer, dependency-free)
+- ✅ Real chrome screenshots captured in the sim
+- ✅ App Store metadata refresh + one-command TestFlight script
+
+**v1.2 follow-ups (tracked, not blocking)**
+- 🟡 Contrast review against the warm palette (audit flags tertiary text)
+- 🟡 Seeded-library marketing screenshots + Figma overlay pipeline
+- 🟡 App Group `group.com.bidephoto.bide` registration (portal) — widget needs it on device
 
 ---
 

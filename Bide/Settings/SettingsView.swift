@@ -8,6 +8,7 @@ struct SettingsView: View {
 
     @State private var lifetime: ReclaimHistoryStore.LifetimeTotals = .zero
     @State private var recentSessions: [ReclaimSession] = []
+    @State private var showTipJar: Bool = false
 
     /// Number of sessions to surface in the "Recent sessions" block. Old
     /// sessions still feed lifetime totals — they're just folded into the
@@ -136,6 +137,19 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Button {
+                        showTipJar = true
+                    } label: {
+                        Label("Support Bide", systemImage: "heart")
+                    }
+                } header: {
+                    Text("Optional support")
+                } footer: {
+                    Text("Three optional non-consumable tips. None of them unlock anything — Bide stays free for everyone, forever.")
+                        .font(BideTheme.caption())
+                }
+
+                Section {
                     Label("Version \(Self.appVersion)", systemImage: "info.circle")
                     Link(destination: URL(string: "https://github.com/grifjef/bide-ios")!) {
                         Label("Source on GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
@@ -143,6 +157,9 @@ struct SettingsView: View {
                 } header: {
                     Text("About")
                 }
+            }
+            .sheet(isPresented: $showTipJar) {
+                TipJarView()
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)

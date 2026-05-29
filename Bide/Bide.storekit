@@ -1,0 +1,62 @@
+{
+  "identifier" : "B1D5C0F1-9A21-4D6E-9F8B-1A2B3C4D5E6F",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "1.99",
+      "familyShareable" : false,
+      "internalID" : "B1D5C0F1-9A21-4D6E-9F8B-1A2B3C4D5E01",
+      "localizations" : [
+        {
+          "description" : "Buy Bide a coffee. One-time, on-device, no subscription.",
+          "displayName" : "Small tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.bidephoto.bide.tip.small",
+      "referenceName" : "Small tip",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "B1D5C0F1-9A21-4D6E-9F8B-1A2B3C4D5E02",
+      "localizations" : [
+        {
+          "description" : "Cover Bide's annual Apple developer fee. Nothing changes in the app.",
+          "displayName" : "Big thanks",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.bidephoto.bide.tip.medium",
+      "referenceName" : "Big thanks",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : false,
+      "internalID" : "B1D5C0F1-9A21-4D6E-9F8B-1A2B3C4D5E03",
+      "localizations" : [
+        {
+          "description" : "Unreasonably generous. Funds whatever cool new module Bide ships next.",
+          "displayName" : "Generous",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.bidephoto.bide.tip.large",
+      "referenceName" : "Generous",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

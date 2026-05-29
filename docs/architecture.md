@@ -246,3 +246,22 @@ These are choices, not gaps. Listed here so future contributors don't accidental
 - **No CoreData → SwiftData migration.** We started on SwiftData; no legacy to bridge.
 - **No third-party packages.** Zero SPM dependencies. Every line is either ours or first-party Apple.
 - **No `UserDefaults` for app data.** Only for the onboarding-completed flag. Everything else lives in SwiftData (or, in v0.2, in-memory).
+
+## Performance baseline (v1.2)
+
+Measured via `ScanPerformanceTests` against a deterministic synthetic
+10,000-candidate library on the iPhone 17 Pro simulator. These are the
+pure scan-algorithm hot paths (no PhotoKit / Vision):
+
+| Pass | Wall clock (10k) | Notes |
+|---|---|---|
+| Exact-duplicate detect | ~6 ms | single dictionary pass |
+| Time bucketing | ~6 ms | linear sweep |
+| On This Day match | ~6 ms | day-of-year filter |
+| Burst grouping | ~2 ms | dictionary by burstId |
+| Similar clustering (full pipeline, stub distance) | ~59 ms | bucket + union-find |
+
+Peak physical memory for the dedup pass: ~44 MB — well under the
+250 MB jetsam-safety target. Baselines are not pinned in CI (machine-
+dependent); the tests run as regression smoke + scale-correctness
+checks (a 10k run that hangs or crashes fails loudly).

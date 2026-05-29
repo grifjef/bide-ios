@@ -13,12 +13,37 @@ final class AppState {
 
     var phase: Phase
 
+    /// Set when iOS hands us a Quick Action (cold launch or warm).
+    /// `DashboardView` consumes and clears it on `.task` / `.onChange`.
+    var pendingShortcut: ShortcutAction?
+
     private let defaults: UserDefaults
     private static let onboardingKey = "bide.hasCompletedOnboarding"
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         self.phase = defaults.bool(forKey: Self.onboardingKey) ? .ready : .onboarding
+    }
+
+    /// Wire `NotificationCenter` to flip `pendingShortcut` when the app
+    /// delegate broadcasts a shortcut tap. Called once from `BideApp.init`.
+    func subscribeToShortcuts() {
+        NotificationCenter.default.addObserver(
+            forName: .bideShortcutAction,
+            object: nil,
+            queue: .main
+        ) { [weak self] note in
+            guard let action = note.userInfo?["action"] as? ShortcutAction else { return }
+            Task { @MainActor in
+                self?.pendingShortcut = action
+            }
+        }
+    }
+
+    func consumePendingShortcut() -> ShortcutAction? {
+        let action = pendingShortcut
+        pendingShortcut = nil
+        return action
     }
 
     func completeOnboarding() {

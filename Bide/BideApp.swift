@@ -3,6 +3,8 @@ import SwiftUI
 
 @main
 struct BideApp: App {
+    @UIApplicationDelegateAdaptor(BideAppDelegate.self) private var appDelegate
+
     @State private var appState = AppState()
     @State private var photoLibrary: PhotoLibraryService
     @State private var reviewBasket = ReviewBasket()
@@ -50,6 +52,19 @@ struct BideApp: App {
                     // once per day on app launch — we persist them locally
                     // for the Diagnostics screen.
                     metrics.subscribeToMetricKit()
+
+                    // Wire AppState to receive Quick Action notifications
+                    // broadcast by BideAppDelegate. Safe to call repeatedly
+                    // — NotificationCenter dedupes by observer block.
+                    appState.subscribeToShortcuts()
+
+                    // If iOS cold-launched us via a Quick Action, the
+                    // delegate stashed it; consume now so the dashboard
+                    // sees pendingShortcut on first appear.
+                    if let cold = appDelegate.coldLaunchShortcut {
+                        appDelegate.handle(shortcutItem: cold)
+                        appDelegate.coldLaunchShortcut = nil
+                    }
                 }
         }
         .onChange(of: scenePhase) { _, new in

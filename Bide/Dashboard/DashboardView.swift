@@ -5,10 +5,12 @@ struct DashboardView: View {
     @Environment(PhotoLibraryService.self) private var photoLibrary
     @Environment(ReviewBasket.self) private var basket
     @Environment(DashboardSummary.self) private var summary
+    @Environment(AppState.self) private var appState
 
     @State private var showReviewBasket: Bool = false
     @State private var showSettings: Bool = false
     @State private var showWhatsNew: Bool = false
+    @State private var pendingOnThisDayPush: Bool = false
 
     /// Last app version the user dismissed the "What's new" sheet for.
     /// Empty string means "never seen" — fresh installs get this, and the
@@ -79,6 +81,9 @@ struct DashboardView: View {
             .navigationDestination(isPresented: $showReviewBasket) {
                 ReviewBasketView()
             }
+            .navigationDestination(isPresented: $pendingOnThisDayPush) {
+                OnThisDayView()
+            }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }
@@ -96,6 +101,10 @@ struct DashboardView: View {
                 // No-op if we already ran in this session via scenePhase.
                 summary.refreshIfNeeded()
                 evaluateWhatsNew()
+                consumeShortcut()
+            }
+            .onChange(of: appState.pendingShortcut) { _, _ in
+                consumeShortcut()
             }
             .refreshable {
                 summary.refreshIfNeeded()
@@ -133,6 +142,24 @@ struct DashboardView: View {
     /// without us having to remember to update a constant.
     private static var currentVersion: String {
         (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "?"
+    }
+
+    /// Drain any pending home-screen Quick Action and route to the right
+    /// destination. Called from `.task` (cold launch) and `.onChange` of
+    /// `appState.pendingShortcut` (warm-launch path; the AppDelegate
+    /// notification arrives after the user taps).
+    private func consumeShortcut() {
+        guard let action = appState.consumePendingShortcut() else { return }
+        switch action {
+        case .findClutter:
+            // Kick a refresh so the user sees motion immediately. The
+            // dashboard itself is already where they want to be.
+            summary.refreshIfNeeded()
+        case .onThisDay:
+            pendingOnThisDayPush = true
+        case .reviewBasket:
+            showReviewBasket = true
+        }
     }
 
     // MARK: - Dynamic subtitles

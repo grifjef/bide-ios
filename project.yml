@@ -21,6 +21,11 @@ settings:
     GCC_TREAT_WARNINGS_AS_ERRORS: NO
     CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER: YES
     ENABLE_HARDENED_RUNTIME: YES
+    # Localization scaffolding: the String Catalog (Bide/Localizable.xcstrings)
+    # auto-extracts every Text("…") / String(localized:) at build time, so
+    # adding a language later is a translation task, not a code task. English
+    # is the source language; nothing is translated yet.
+    SWIFT_EMIT_LOC_STRINGS: YES
     MARKETING_VERSION: "1.1.0"
     CURRENT_PROJECT_VERSION: "2"
     DEVELOPMENT_TEAM: YN9ADA3LR8

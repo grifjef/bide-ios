@@ -6,6 +6,7 @@ struct SimilarPhotosView: View {
     @Environment(ReviewBasket.self) private var basket
     @Environment(\.modelContext) private var modelContext
     @State private var scanService: SimilarPhotosScanService?
+    @State private var showHelp: Bool = false
 
     var body: some View {
         Group {
@@ -19,6 +20,7 @@ struct SimilarPhotosView: View {
         .background(BideTheme.background)
         .navigationTitle("Similar photos")
         .navigationBarTitleDisplayMode(.large)
+        .helpButton(isPresented: $showHelp)
         .task {
             if scanService == nil {
                 let store = IndexedAssetStore(modelContext: modelContext)

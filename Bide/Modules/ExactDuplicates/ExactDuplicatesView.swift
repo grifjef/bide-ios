@@ -4,6 +4,7 @@ struct ExactDuplicatesView: View {
     @Environment(PhotoLibraryService.self) private var photoLibrary
     @Environment(ReviewBasket.self) private var basket
     @State private var scan: ExactDuplicatesScanService?
+    @State private var showHelp: Bool = false
 
     var body: some View {
         Group {
@@ -16,6 +17,7 @@ struct ExactDuplicatesView: View {
         .background(BideTheme.background)
         .navigationTitle("Exact duplicates")
         .navigationBarTitleDisplayMode(.large)
+        .helpButton(isPresented: $showHelp)
         .task {
             if scan == nil {
                 scan = ExactDuplicatesScanService(photoLibrary: photoLibrary)

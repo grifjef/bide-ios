@@ -4,6 +4,7 @@ struct BlurryShotsView: View {
     @Environment(PhotoLibraryService.self) private var photoLibrary
     @Environment(ReviewBasket.self) private var basket
     @State private var scan: BlurryShotsScanService?
+    @State private var showHelp: Bool = false
 
     var body: some View {
         Group {
@@ -17,6 +18,7 @@ struct BlurryShotsView: View {
         .background(BideTheme.background)
         .navigationTitle("Blurry shots")
         .navigationBarTitleDisplayMode(.large)
+        .helpButton(isPresented: $showHelp)
         .task {
             if scan == nil {
                 scan = BlurryShotsScanService(photoLibrary: photoLibrary)

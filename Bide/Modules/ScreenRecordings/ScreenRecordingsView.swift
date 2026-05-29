@@ -8,6 +8,7 @@ struct ScreenRecordingsView: View {
     @Environment(PhotoLibraryService.self) private var photoLibrary
     @Environment(ReviewBasket.self) private var basket
     @State private var viewModel: ScreenRecordingsViewModel?
+    @State private var showHelp: Bool = false
 
     var body: some View {
         Group {
@@ -21,6 +22,7 @@ struct ScreenRecordingsView: View {
         .background(BideTheme.background)
         .navigationTitle("Screen recordings")
         .navigationBarTitleDisplayMode(.large)
+        .helpButton(isPresented: $showHelp)
         .task {
             if viewModel == nil {
                 viewModel = ScreenRecordingsViewModel(photoLibrary: photoLibrary)

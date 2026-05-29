@@ -14,6 +14,7 @@ struct LivePhotosView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel: LivePhotosViewModel?
     @State private var pendingConversion: LivePhotoSummary?
+    @State private var showHelp: Bool = false
 
     var body: some View {
         Group {
@@ -27,6 +28,7 @@ struct LivePhotosView: View {
         .background(BideTheme.background)
         .navigationTitle("Live Photos")
         .navigationBarTitleDisplayMode(.large)
+        .helpButton(isPresented: $showHelp)
         .task {
             if viewModel == nil {
                 viewModel = LivePhotosViewModel(

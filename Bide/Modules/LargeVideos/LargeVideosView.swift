@@ -4,6 +4,7 @@ struct LargeVideosView: View {
     @Environment(PhotoLibraryService.self) private var photoLibrary
     @Environment(ReviewBasket.self) private var basket
     @State private var viewModel: LargeVideosViewModel?
+    @State private var showHelp: Bool = false
 
     var body: some View {
         Group {
@@ -17,6 +18,7 @@ struct LargeVideosView: View {
         .background(BideTheme.background)
         .navigationTitle("Large videos")
         .navigationBarTitleDisplayMode(.large)
+        .helpButton(isPresented: $showHelp)
         .task {
             if viewModel == nil {
                 viewModel = LargeVideosViewModel(photoLibrary: photoLibrary)

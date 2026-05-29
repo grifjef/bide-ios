@@ -11,6 +11,7 @@ struct OnThisDayView: View {
     @Environment(PhotoLibraryService.self) private var photoLibrary
     @Environment(ReviewBasket.self) private var basket
     @State private var scan: OnThisDayService?
+    @State private var showHelp: Bool = false
 
     var body: some View {
         Group {
@@ -24,6 +25,7 @@ struct OnThisDayView: View {
         .background(BideTheme.background)
         .navigationTitle("On this day")
         .navigationBarTitleDisplayMode(.large)
+        .helpButton(isPresented: $showHelp)
         .task {
             if scan == nil {
                 scan = OnThisDayService(photoLibrary: photoLibrary)

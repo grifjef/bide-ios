@@ -21,7 +21,7 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install SwiftLint
         run: brew install swiftlint
       - name: Run SwiftLint
@@ -33,7 +33,7 @@ jobs:
     needs: [lint]
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -95,7 +95,7 @@ jobs:
     timeout-minutes: 15
     continue-on-error: true # non-blocking until configured + token added
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
